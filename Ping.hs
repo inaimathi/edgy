@@ -4,17 +4,19 @@ import Data.Map (Map)
 import qualified Data.Map as Map
 
 collapse :: Wave -> Coord
-collapse (Wave (x, y) (x', y')) = (x + x', y + y')
+collapse (Wave (x, y) (x', y') rate) = (x + x'', y + y'')
+    where x'' = round $ fromIntegral x' * rate
+          y'' = round $ fromIntegral y' * rate
 
 propagate :: Wave -> Wave
-propagate (Wave origin (x', y')) = Wave origin (inc x', inc y')
+propagate (Wave origin (x', y') rate) = Wave origin (inc x', inc y') rate
     where inc 0 = 0
           inc n
               | n > 0 = succ n
               | otherwise = pred n
 
 opposite :: Wave -> Wave
-opposite (Wave origin (x', y')) = Wave origin (-x', -y')
+opposite (Wave origin (x', y') rate) = Wave origin (-x', -y') rate
 
 look :: Grid -> Wave -> Bool
 look g w = Map.member (collapse w) $ gridMap g
@@ -26,7 +28,11 @@ collide g w = case (look g w, look g $ opposite w) of
                 _ -> Lost
 
 waves :: Coord -> [Wave]
-waves origin = map (Wave origin) [(0, 1), (1, 0)]
+waves origin = [ Wave origin (0, 1) 1.0
+               , Wave origin (1, 0) 1.0
+               , Wave origin (1, 1) 0.75
+               , Wave origin (-1, 1) 0.75
+               ]
 
 ping :: Grid -> Coord -> Bool
 -- If any wave encounters a state change simultaneously at each end, we've got a keeper.
@@ -37,7 +43,7 @@ ping g origin = recur $ waves origin
           recur w
               | any ((==Echo) . collide g) w = True
               | otherwise = recur $ next w
-          next = filter ((==Lost) . collide g) . map propagate
+          next = filter ((/=Lost) . collide g) . map propagate
 
 ---------- Base Types
 type Coord = (Integer, Integer)
@@ -47,7 +53,7 @@ data Grid = Grid { gridWidth :: Integer, gridHeight :: Integer
 
 data Signal = Echo | Silence | Lost deriving (Eq, Show)
 
-data Wave = Wave Coord Coord deriving (Eq, Ord, Show)
+data Wave = Wave Coord Coord Float deriving (Eq, Ord, Show)
 
 ---------- Minor Utility
 -- float :: (Integral a, Num a) => a -> Float
@@ -98,7 +104,17 @@ showWaves ws = unlines [line y | y <- [0..10]]
                          then 'X'
                          else ' '
 
+-- putNextTo :: String -> String -> IO ()
+-- putNextTo strs = 
+
+putTwoUp :: String -> String -> IO ()
+putTwoUp strA strB = mapM_ (\(a, b) -> putStrLn $ concat [a, " + ", b])
+               $ zip (lines strA) (lines strB)
+
 main :: IO ()
 -- main = mapM_ (putStrLn . showWaves) . take 5 . iterate (map propagate) $ waves (5, 5)
 main = do str <- readFile "test.txt"
-          putStrLn $ showGrid '.' $ thin $ sparsify (/='.') str
+          let sparse = sparsify (/='.') str
+              thinned = thin sparse
+              sh = showGrid '.'
+          putTwoUp (sh sparse) (sh thinned)
