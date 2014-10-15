@@ -3,7 +3,8 @@ module Ping where
 import Data.Map hiding (foldl, fromList, toList, map)
 
 type Coord = (Integer, Integer)
-type Ping = [(Coord, Coord)]
+type Pair = (Coord, Coord)
+type Ping = [Pair]
 data Grid = Grid { gridWidth :: Integer, gridHeight :: Integer, gridMap :: Map (Integer, Integer) Char} deriving (Eq, Ord, Show)
 data Bump = Solid | Glancing | Unsure deriving (Eq)
 
