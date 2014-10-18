@@ -1,6 +1,8 @@
 module Ping where
 
-import Data.Map (Map)
+import Util
+import SparseRead
+
 import qualified Data.Map as Map
 
 collapse :: Wave -> Coord
@@ -19,7 +21,7 @@ opposite :: Wave -> Wave
 opposite (Wave origin (x', y') rate) = Wave origin (-x', -y') rate
 
 look :: Grid -> Wave -> Bool
-look g w = Map.member (collapse w) $ gridMap g
+look g w = member g $ collapse w
 
 collide :: Grid -> Wave -> Signal
 collide g w = case (look g w, look g $ opposite w) of
@@ -30,8 +32,8 @@ collide g w = case (look g w, look g $ opposite w) of
 waves :: Coord -> [Wave]
 waves origin = [ Wave origin (0, 1) 1.0
                , Wave origin (1, 0) 1.0
-               , Wave origin (1, 1) 0.75
-               , Wave origin (-1, 1) 0.75
+--               , Wave origin (1, 1) 0.75
+--               , Wave origin (-1, 1) 0.75
                ]
 
 ping :: Grid -> Coord -> Bool
@@ -46,11 +48,6 @@ ping g origin = recur $ waves origin
           next = filter ((/=Lost) . collide g) . map propagate
 
 ---------- Base Types
-type Coord = (Integer, Integer)
-
-data Grid = Grid { gridWidth :: Integer, gridHeight :: Integer
-                 , gridMap :: Map Coord Char} deriving (Eq, Ord, Show)
-
 data Signal = Echo | Silence | Lost deriving (Eq, Show)
 
 data Wave = Wave Coord Coord Float deriving (Eq, Ord, Show)
@@ -66,35 +63,9 @@ data Wave = Wave Coord Coord Float deriving (Eq, Ord, Show)
 -- tuple :: Pair -> (Integer, Integer)
 -- tuple (Pair a b) = (num a, num b) 
 
--- -- none :: [Bool] -> Bool
--- -- none = and . map not
-
-iterateM_ :: Monad m => (a -> m a) -> a -> m b
-iterateM_ f a = do res <- f a
-                   iterateM_ f res
-
-lengthI :: [a] -> Integer
-lengthI = toInteger . length
-
 ---------- Debugging stuff
-showGrid :: Char -> Grid -> String
-showGrid bg g = unlines [collectLine y | y <- [1..h]]
-    where collectLine y = [ Map.findWithDefault bg (x, y) m | x <- [1..w]]
-          w = gridWidth g
-          h = gridHeight g
-          m = gridMap g
-
 thin :: Grid -> Grid
 thin g = g { gridMap = Map.filterWithKey (\k _ -> ping g k) $ gridMap g}
-
-sparsify :: (Char -> Bool) -> String -> Grid
-sparsify predicate str = Grid (toInteger . lengthI $ head ls) (toInteger $ lengthI ls) m
-    where ls = lines str
-          m = foldl addLine Map.empty $ zip [0..] ls
-          addLine memo (ix, line) = foldl (addCell ix) memo $ zip [0..] line
-          addCell y memo (x, char)
-              | predicate char == True = Map.insert (x, y) char memo
-              | otherwise = memo
 
 showWaves :: [Wave] -> String
 showWaves ws = unlines [line y | y <- [0..10]]
@@ -103,13 +74,6 @@ showWaves ws = unlines [line y | y <- [0..10]]
           charOf coord = if coord `elem` cs
                          then 'X'
                          else ' '
-
--- putNextTo :: String -> String -> IO ()
--- putNextTo strs = 
-
-putTwoUp :: String -> String -> IO ()
-putTwoUp strA strB = mapM_ (\(a, b) -> putStrLn $ concat [a, " + ", b])
-               $ zip (lines strA) (lines strB)
 
 main :: IO ()
 -- main = mapM_ (putStrLn . showWaves) . take 5 . iterate (map propagate) $ waves (5, 5)
