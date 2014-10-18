@@ -1,5 +1,9 @@
 module Util ( iterateM_, putTwoUp
+            , lengthI
             , none) where
+
+lengthI :: [a] -> Integer
+lengthI = toInteger . length
 
 putTwoUp :: String -> String -> IO ()
 putTwoUp strA strB = mapM_ (\(a, b) -> putStrLn $ concat [a, " + ", b])

@@ -3,6 +3,8 @@ module SparseRead ( Grid(..), Coord
                   , member
                   , showGrid)where
 
+import Util
+
 import Data.Map (Map)
 import qualified Data.Map as Map
 
@@ -25,9 +27,6 @@ showGrid bg g = unlines [collectLine y | y <- [1..h]]
           w = gridWidth g
           h = gridHeight g
           m = gridMap g
-
-lengthI :: [a] -> Integer
-lengthI = toInteger . length
 
 readSparse :: FilePath -> IO Grid
 readSparse = fmap (sparsify (/='.')) . readFile
