@@ -1,7 +1,7 @@
 module SparseRead ( Grid(..), Coord
                   , readSparse, sparsify
                   , member
-                  , showGrid)where
+                  , showGrid, showMap) where
 
 import Util
 
@@ -20,6 +20,12 @@ sparsify predicate str = Grid (toInteger . lengthI $ head ls) (toInteger $ lengt
           addCell y memo (x, char)
               | predicate char == True = Map.insert (x, y) char memo
               | otherwise = memo
+
+showMap :: Show b => Integer -> Integer -> Map Coord b -> String
+showMap width height m = unlines [collectLine y | y <- [1..height]]
+    where collectLine y = concat [ case Map.lookup (x, y) m of
+                                     Nothing -> " "
+                                     Just a -> show a | x <- [1..width]]
 
 showGrid :: Char -> Grid -> String
 showGrid bg g = unlines [collectLine y | y <- [1..h]]

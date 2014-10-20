@@ -1,6 +1,11 @@
 module Util ( iterateM_, putTwoUp
-            , lengthI
+            , lengthI, descending
             , none) where
+
+import Data.List (sortBy)
+
+descending :: Ord a => [a] -> [a]
+descending = sortBy (flip compare)
 
 lengthI :: [a] -> Integer
 lengthI = toInteger . length
