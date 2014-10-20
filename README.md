@@ -136,7 +136,7 @@ The above is obviously not happening yet. This repo is still a work heavily in p
 
 ### Direction mapping
 
-`Distance.hs` contains some thoughts and experiments based on mapping the cardinal and ordinal directions of particular pixels, based on their contiguous neighborhood. Currently, given the example input, it produces
+`Direction.hs` contains some thoughts and experiments based on mapping the cardinal and ordinal directions of particular pixels, based on their contiguous neighborhood. Currently, given the example input, it produces
 
        ||                          +    \/                         
       --------------------         +   \O\////\\\\///\\\\O/        

@@ -1,4 +1,4 @@
-module Distance where
+module Direction where
 
 import Util
 import SparseRead
