@@ -1,6 +1,6 @@
 module SparseRead ( Grid(..), Coord
                   , readSparse, sparsify
-                  , member
+                  , member, mooreNeighbors
                   , showGrid, showMap) where
 
 import Util
@@ -39,3 +39,6 @@ readSparse = fmap (sparsify (/='.')) . readFile
 
 member :: Grid -> Coord -> Bool
 member g c = Map.member c $ gridMap g
+
+mooreNeighbors :: Coord -> [Coord]
+mooreNeighbors (x, y) = [(x+x', y+y') | x' <- [-1..1], y' <- [-1..1], (x', y') /= (0,0)]
