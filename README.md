@@ -136,7 +136,7 @@ The above is obviously not happening yet. This repo is still a work heavily in p
 
 ### Direction mapping
 
-`Direction.hs` contains some thoughts and experiments based on mapping the cardinal and ordinal directions of particular pixels, based on their contiguous neighborhood. Currently, given the example input, it produces
+`Direction.hs` contains some thoughts and experiments based on mapping the cardinal and ordinal directions of particular pixels, based on their contiguous neighborhood. The initial model it produces looks something like
 
        ||                          +    \/                         
       --------------------         +   \O\////\\\\///\\\\O/        
@@ -188,7 +188,9 @@ The above is obviously not happening yet. This repo is still a work heavily in p
 
 which represents the cardinal and ordinal direction map of the image. Using this information, and some island size/dimension comparisons, we might be able to pull out the intended lines from the given image.
 
-### Notes
+The current code generates region data from the above (the output is too large to paste here; run `main` from `Direction.hs` if you'd like to see it). The problem I'm running into is that arrowhead strokes connected to circles are blending together, so I'm getting much larger regions than I was expecting, and they represent multiple strokes in the image. This is something that would be solved pretty handily by the multi-color cheat I've been talking about, so I might just go ahead and implement that next.
+
+### General Notes
 
 - The current examples and experimentation are based on ascii representations of our target images. I'm assuming that once I figure out the principles, porting them over to a pixel context won't prove too difficult (in fact, having the additional hue/saturation/RGB data around might help analysis once we get to that stage).
 - These are not experiments for generic scene carving/object identification. The idea here is to take dead bitmaps and generate flow diagrams for [visual programs](http://langnostic.inaimathi.ca/article?name=the-big-problem-and-visual-compilers.html) from them. This means we're dealing with a very restricted set of images:
