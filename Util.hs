@@ -39,4 +39,4 @@ putBeside strs = putLns $ map lines strs
 splitEvery :: Int -> [a] -> [[a]]
 splitEvery n lst = recur lst []
     where recur [] acc = reverse $ acc
-          recur lst acc = recur (drop n lst) $ (take n lst):acc
+          recur l acc = recur (drop n l) $ (take n l):acc

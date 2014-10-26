@@ -1,10 +1,12 @@
 module SparseRead ( Grid(..), Coord
                   , readSparse, sparsify
-                  , member, mooreNeighbors
+                  , member, mooreNeighbors, allNeighbors, islands
                   , showGrid, showMap) where
 
 import Util
 
+import Data.Maybe (fromJust)
+import Data.List (nub)
 import Data.Map (Map)
 import qualified Data.Map as Map
 
@@ -42,3 +44,26 @@ member g c = Map.member c $ gridMap g
 
 mooreNeighbors :: Coord -> [Coord]
 mooreNeighbors (x, y) = [(x+x', y+y') | x' <- [-1..1], y' <- [-1..1], (x', y') /= (0,0)]
+
+allNeighbors :: [Coord] -> [Coord]
+allNeighbors = nub . concatMap mooreNeighbors
+
+----- Island-related stuff
+islands :: Integer -> Map Coord a -> [Map Coord a]
+islands threshold grid = recur grid []
+    where recur m acc
+              | Map.size m == 0 = acc
+              | otherwise = let r = nextRegion m
+                            in recur (Map.difference m r)
+                                   $ if sizeI r >= threshold
+                                     then r:acc else acc
+
+nextRegion :: Map Coord a -> Map Coord a
+nextRegion m = recur start m Map.empty
+    where start = map fst . take 1 $ Map.toList m
+          members grid cs = filter (flip Map.member grid) cs
+          val c = fromJust $ Map.lookup c m
+          recur [] _ acc = acc
+          recur layer grid acc = let nextGrid = foldl (flip Map.delete) grid layer
+                                     nextLayer = members nextGrid $ allNeighbors layer
+                                 in recur nextLayer nextGrid $ foldl (\memo c -> Map.insert c (val c) memo) acc layer

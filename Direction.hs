@@ -3,8 +3,6 @@ module Direction where
 import Util
 import SparseRead
 
-import Data.Maybe (fromJust)
-import Data.List (nub)
 import Data.Map (Map)
 import qualified Data.Map as Map
 
@@ -39,26 +37,6 @@ regions g = concatMap (islands 7 . Map.fromList) [ordA, ordB, cardA, cardB, allC
                                    H -> ((k,H):a, b, c)
                                    V -> (a, (k,V):b, c)
                                    _ -> (a, b, (k,C):c)
-
------ Island-related stuff
-islands :: Integer -> Map Coord a -> [Map Coord a]
-islands threshold grid = recur grid []
-    where recur m acc
-              | Map.size m == 0 = acc
-              | otherwise = let r = nextRegion m
-                            in recur (Map.difference m r)
-                                   $ if sizeI r >= threshold
-                                     then r:acc else acc
-
-nextRegion :: Map Coord a -> Map Coord a
-nextRegion m = recur start m Map.empty
-    where start = map fst . take 1 $ Map.toList m
-          members m cs = filter (flip Map.member m) cs
-          val c = fromJust $ Map.lookup c m
-          recur [] _ acc = acc
-          recur layer grid acc = let nextGrid = foldl (flip Map.delete) grid layer
-                                     nextLayer = members nextGrid $ allNeighbors layer
-                                 in recur nextLayer nextGrid $ foldl (\memo c -> Map.insert c (val c) memo) acc layer
 
 ----- The main function
 main :: IO ()
@@ -111,6 +89,3 @@ findContiguous g cs = recur cs []
           recur (c:rest) acc = case Map.lookup c (gridMap g) of
                                  Nothing -> recur [] acc
                                  Just _ -> recur rest $ c:acc
-
-allNeighbors :: [Coord] -> [Coord]
-allNeighbors = nub . concatMap mooreNeighbors
