@@ -3,6 +3,7 @@ module Direction where
 import Util
 import SparseRead
 
+import Data.Maybe (fromJust)
 import Data.List (nub)
 import Data.Map (Map)
 import qualified Data.Map as Map
@@ -26,7 +27,7 @@ scoreCoord g (x, y) = Score (lengthI contigH) (lengthI contigV)
 
 ----- Region-related stuff
 regions :: Grid -> [Map Coord Direction]
-regions g = map Map.fromList [ordA, ordB, cardA, cardB, allC]
+regions g = concatMap (islands 7 . Map.fromList) [ordA, ordB, cardA, cardB, allC]
     where score = scoreGrid g
           (ordA, ordB, ordC) = Map.foldWithKey byOrd ([], [], []) score
           (cardA, cardB, allC) = Map.foldWithKey byCard ([], [], ordC) score
@@ -39,31 +40,31 @@ regions g = map Map.fromList [ordA, ordB, cardA, cardB, allC]
                                    V -> (a, (k,V):b, c)
                                    _ -> (a, b, (k,C):c)
 
--- regions :: Integer -> Map Coord Score -> [Map Coord Bool]
--- regions threshold grid = recur grid []
---     where recur m acc
---               | Map.size m == 0 = acc
---               | otherwise = let r = nextRegion m
---                             in recur (Map.difference m r) 
---                                    $ if sizeI r >= threshold 
---                                      then r:acc else acc
+----- Island-related stuff
+islands :: Integer -> Map Coord a -> [Map Coord a]
+islands threshold grid = recur grid []
+    where recur m acc
+              | Map.size m == 0 = acc
+              | otherwise = let r = nextRegion m
+                            in recur (Map.difference m r)
+                                   $ if sizeI r >= threshold
+                                     then r:acc else acc
 
--- TODO
--- This still has to filter for like regions. We're only looking for contiguous blocks, not islands.
-nextRegion :: Map Coord Score -> Map Coord Bool
+nextRegion :: Map Coord a -> Map Coord a
 nextRegion m = recur start m Map.empty
     where start = map fst . take 1 $ Map.toList m
           members m cs = filter (flip Map.member m) cs
+          val c = fromJust $ Map.lookup c m
           recur [] _ acc = acc
           recur layer grid acc = let nextGrid = foldl (flip Map.delete) grid layer
                                      nextLayer = members nextGrid $ allNeighbors layer
-                                 in recur nextLayer nextGrid $ foldl (\memo c -> Map.insert c True memo) acc layer
+                                 in recur nextLayer nextGrid $ foldl (\memo c -> Map.insert c (val c) memo) acc layer
 
 ----- The main function
 main :: IO ()
 main = do g <- readSparse "test.txt"
-          let putGrid = putStrLn . showMap (gridWidth g) (gridHeight g)
-          mapM_ putGrid $ regions g
+--          let putGrid = putStrLn . showMap (gridWidth g) (gridHeight g)
+          mapM_ putBeside . splitEvery 3 . map (showMap (gridWidth g) (gridHeight g)) $ regions g
 
 ----- Data declarations
 data Score = Score { north :: Integer, east :: Integer

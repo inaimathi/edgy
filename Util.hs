@@ -1,8 +1,9 @@
 module Util ( iterateM_, putTwoUp
             , lengthI, sizeI, infI, descending
+            , putBeside, splitEvery
             , none) where
 
-import Data.List (sortBy)
+import Data.List (sortBy, intercalate)
 import Data.Map (Map, size)
 
 descending :: Ord a => [a] -> [a]
@@ -27,3 +28,15 @@ none = and . map not
 
 infI :: Integer
 infI = toInteger . round $ 1/0
+
+putBeside :: [String] -> IO ()
+putBeside strs = putLns $ map lines strs
+    where putLns lns
+              | any (==[]) lns = putStrLn ""
+              | otherwise = do putStrLn . intercalate " + " $ map head lns
+                               putLns $ map tail lns
+
+splitEvery :: Int -> [a] -> [[a]]
+splitEvery n lst = recur lst []
+    where recur [] acc = reverse $ acc
+          recur lst acc = recur (drop n lst) $ (take n lst):acc
