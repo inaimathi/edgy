@@ -24,11 +24,8 @@ scoreCoord g (x, y) = Score contigH contigV contigSW contigSE
                           , ((repeat x), [y, pred y..])]
 
 ----- Region-related stuff
-regions :: Grid -> [Map Coord Direction]
-regions g = concatMap (islands 7) $ concatMap (splitByVal . flip Map.map score) [ordinal, cardinal]
-    where score = scoreGrid g
-
--- mapM_ putBeside . splitEvery 3 . map (showMap (gridWidth g) (gridHeight g)) $ concatMap (islands 7) $ splitByVal $ Map.map (decide 7) $ scoreGrid g
+regions :: Integer -> Map Coord Score -> [Map Coord Direction]
+regions threshold score = concatMap (islands threshold) $ concatMap (splitByVal . flip Map.map score) [ordinal, cardinal]
 
 splitByVal :: Ord a => Map Coord a -> [Map Coord a]
 splitByVal m = map (\(k, v) -> Map.fromList $ zip v $ repeat k) $ splits
@@ -45,7 +42,7 @@ main = do g <- readSparse "test.txt"
               -- score = scoreGrid g
               -- showScore = showGrid . flip Map.map score
 --          putBeside $ map showScore [cardinal, ordinal, decide 5]
-          mapM_ putBeside . splitEvery 3 . map (showMap (gridWidth g) (gridHeight g)) $ regions g
+          mapM_ putBeside . splitEvery 3 . map (showMap (gridWidth g) (gridHeight g)) . regions 7 $ scoreGrid g
 
 ----- Data declarations
 data Score = Score { north :: Integer, east :: Integer
