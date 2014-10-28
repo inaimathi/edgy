@@ -2,6 +2,7 @@ module Direction where
 
 import Util
 import SparseRead
+import Elements
 
 import Data.Map (Map)
 import qualified Data.Map as Map
@@ -34,6 +35,25 @@ splitByVal m = map (\(k, v) -> Map.fromList $ zip v $ repeat k) $ splits
           ins new (Just v) =  Just $ new:v
           ins new Nothing = Just [new]
 
+----- Generating elements
+genElements :: [Map Coord Direction] -> [Element]
+genElements [] = []
+genElements rs = map gen rs
+    where gen region = Line minCoord maxCoord
+              where dir = snd . head $ Map.toList region
+                    xFn (x, y) ((minX, minY), (maxX, maxY)) = 
+                        case dir of
+                          H -> ((min x minX, y), (max x maxX, y))
+                          V -> ((x, min y minY), (x, max y maxY))
+                          SE -> ((min x minX, min y minY), (max x maxX, max y maxY))
+                          SW -> ((min x minX, max y minY), (max x maxX, min y maxY))
+                          C -> ((min x minX, max y minY), (max x maxX, min y maxY))
+                    (minCoord, maxCoord) = extremeCoords xFn region
+
+
+extremeCoords :: (Coord -> (Coord, Coord) -> (Coord, Coord)) -> Map Coord a -> (Coord, Coord)
+extremeCoords fn m = Map.foldWithKey (\k _ memo -> fn k memo) (first, first) m
+    where first = fst . head $ Map.toList m
 
 ----- The main function
 main :: IO ()
@@ -42,7 +62,7 @@ main = do g <- readSparse "test.txt"
               -- score = scoreGrid g
               -- showScore = showGrid . flip Map.map score
 --          putBeside $ map showScore [cardinal, ordinal, decide 5]
-          mapM_ putBeside . splitEvery 3 . map (showMap (gridWidth g) (gridHeight g)) . regions 7 $ scoreGrid g
+          mapM_ (putStrLn . show) . genElements $ regions 7 $ scoreGrid g
 
 ----- Data declarations
 data Score = Score { north :: Integer, east :: Integer
