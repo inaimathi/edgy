@@ -11,47 +11,50 @@ scoreGrid :: Grid -> Map Coord Score
 scoreGrid g = Map.mapWithKey (\k _ -> scoreCoord g k) $ gridMap g
 
 scoreCoord :: Grid -> Coord -> Score
-scoreCoord g (x, y) = Score (lengthI contigH) (lengthI contigV)
-                      (lengthI contigSW) (lengthI contigSE)
-    where contig xs ys = findContiguous g $ zip xs ys
-          contigSW = concat [ contig [x, pred x..] [y, pred y..]
-                            , contig [x..] [y..]]
-          contigSE = concat [ contig [x..] [y, pred y..]
-                            , contig [x, pred x..] [y..] ]
-          contigH = concat [ contig [x..] $ repeat y
-                           , contig [x,pred x..] $ repeat y]
-          contigV = concat [ contig (repeat x) [y..]
-                           , contig (repeat x) [y, pred y..]]
+scoreCoord g (x, y) = Score contigH contigV contigSW contigSE
+    where contig (xs, ys) = findContiguous g $ zip xs ys
+          score = lengthI . concatMap contig
+          contigSW = score [ ([x, pred x..], [y, pred y..])
+                           , ([x..], [y..])]
+          contigSE = score [ ([x..], [y, pred y..])
+                           , ([x, pred x..], [y..]) ]
+          contigH = score [ ([x..], repeat y)
+                          , ([x,pred x..], repeat y)]
+          contigV = score [ ((repeat x), [y..])
+                          , ((repeat x), [y, pred y..])]
 
 ----- Region-related stuff
 regions :: Grid -> [Map Coord Direction]
-regions g = concatMap (islands 7 . Map.fromList) [ordA, ordB, cardA, cardB, allC]
+regions g = concatMap (islands 7) $ concatMap (splitByVal . flip Map.map score) [ordinal, cardinal]
     where score = scoreGrid g
-          (ordA, ordB, ordC) = Map.foldWithKey byOrd ([], [], []) score
-          (cardA, cardB, allC) = Map.foldWithKey byCard ([], [], ordC) score
-          byOrd k v (a, b, c) = case ordinal v of
-                                  SW -> ((k,SW):a, b, c)
-                                  SE -> (a, (k,SE):b, c)
-                                  _ -> (a, b, (k,C):c)
-          byCard k v (a, b, c) = case cardinal v of
-                                   H -> ((k,H):a, b, c)
-                                   V -> (a, (k,V):b, c)
-                                   _ -> (a, b, (k,C):c)
+
+-- mapM_ putBeside . splitEvery 3 . map (showMap (gridWidth g) (gridHeight g)) $ concatMap (islands 7) $ splitByVal $ Map.map (decide 7) $ scoreGrid g
+
+splitByVal :: Ord a => Map Coord a -> [Map Coord a]
+splitByVal m = map (\(k, v) -> Map.fromList $ zip v $ repeat k) $ splits
+    where splits = Map.toList $ Map.foldWithKey split Map.empty m 
+          split k v memo = Map.alter (ins k) v memo
+          ins new (Just v) =  Just $ new:v
+          ins new Nothing = Just [new]
+
 
 ----- The main function
 main :: IO ()
 main = do g <- readSparse "test.txt"
---          let putGrid = putStrLn . showMap (gridWidth g) (gridHeight g)
+          let -- showGrid = showMap (gridWidth g) (gridHeight g)
+              -- score = scoreGrid g
+              -- showScore = showGrid . flip Map.map score
+--          putBeside $ map showScore [cardinal, ordinal, decide 5]
           mapM_ putBeside . splitEvery 3 . map (showMap (gridWidth g) (gridHeight g)) $ regions g
 
 ----- Data declarations
 data Score = Score { north :: Integer, east :: Integer
                    , southWest :: Integer
-                   , southEast :: Integer } deriving (Eq)
+                   , southEast :: Integer } deriving (Eq, Ord)
 
-data Direction = H | V | SW | SE | C deriving (Eq)
+data Direction = H | V | SW | SE | C deriving (Eq, Ord)
 
-data DirType = Cardinal | Ordinal deriving (Eq)
+data DirType = Cardinal | Ordinal deriving (Eq, Ord)
 
 instance Show Direction where
     show H = "-"
@@ -64,9 +67,9 @@ instance Show Direction where
 decide :: Integer -> Score -> Direction
 decide threshold s@(Score n e sw se)
     | ((n - threshold) > 0 || (e - threshold) > 0) 
-      && (abs $ n - e) > threshold
-      && (abs $ n - e) > (abs $ sw - se) = cardinal s
-    | ((sw - threshold) > 0 || (se - threshold) > 0) && (abs $ sw - se) > threshold = ordinal s
+      && (abs $ n - e) > threshold = cardinal s
+    | ((sw - threshold) > 0 || (se - threshold) > 0) 
+      && (abs $ sw - se) > threshold = ordinal s
     | otherwise = C
 
 ordinal :: Score -> Direction
