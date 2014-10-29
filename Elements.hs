@@ -7,7 +7,7 @@ data Element = Line Coord Coord deriving (Eq, Ord, Show, Read)
 
 fbShow :: String -> Element -> String
 fbShow factId (Line (x, y) (x', y')) = 
-    concat [ "(", factId, " :LINE NIL)\n"
+    concat [ "(", factId, " :LINE-SEGMENT NIL)\n"
            , "(", factId, " :START (", show x, " ", show y, "))\n"
            , "(", factId, " :END (", show x', " ", show y', "))\n"]
     
