@@ -1,4 +1,6 @@
-module Direction where
+module Direction ( Score(..), Direction(..)
+                 , scoreGrid, scoreMap, scoreCoord
+                 , decide, cardinal, ordinal) where
 
 import Util
 import SparseRead
@@ -9,11 +11,14 @@ import qualified Data.Map as Map
 
 ----- Scoring-related stuff
 scoreGrid :: Grid -> Map Coord Score
-scoreGrid g = Map.mapWithKey (\k _ -> scoreCoord g k) $ gridMap g
+scoreGrid g = scoreMap $ gridMap g
 
-scoreCoord :: Grid -> Coord -> Score
-scoreCoord g (x, y) = Score contigH contigV contigSW contigSE
-    where contig (xs, ys) = findContiguous g $ zip xs ys
+scoreMap :: Map Coord a -> Map Coord Score
+scoreMap m = Map.mapWithKey (\k _ -> scoreCoord m k) m
+
+scoreCoord :: Map Coord a -> Coord -> Score
+scoreCoord m (x, y) = Score contigH contigV contigSW contigSE
+    where contig (xs, ys) = findContiguous m $ zip xs ys
           score = lengthI . concatMap contig
           contigSW = score [ ([x, pred x..], [y, pred y..])
                            , ([x..], [y..])]
@@ -26,14 +31,7 @@ scoreCoord g (x, y) = Score contigH contigV contigSW contigSE
 
 ----- Region-related stuff
 regions :: Integer -> Map Coord Score -> [Map Coord Direction]
-regions threshold score = concatMap (islands threshold) $ concatMap (splitByVal . flip Map.map score) [ordinal, cardinal]
-
-splitByVal :: Ord a => Map Coord a -> [Map Coord a]
-splitByVal m = map (\(k, v) -> Map.fromList $ zip v $ repeat k) $ splits
-    where splits = Map.toList $ Map.foldWithKey split Map.empty m 
-          split k v memo = Map.alter (ins k) v memo
-          ins new (Just v) =  Just $ new:v
-          ins new Nothing = Just [new]
+regions threshold score = concatMap (islands threshold) $ concatMap (splitByVal . flip Map.map score) [ordinal]
 
 ----- Generating elements
 genElements :: [Map Coord Direction] -> [Element]
@@ -58,11 +56,10 @@ extremeCoords fn m = Map.foldWithKey (\k _ memo -> fn k memo) (first, first) m
 ----- The main function
 main :: IO ()
 main = do g <- readSparse "test.txt"
-          let -- showGrid = showMap (gridWidth g) (gridHeight g)
-              -- score = scoreGrid g
-              -- showScore = showGrid . flip Map.map score
---          putBeside $ map showScore [cardinal, ordinal, decide 5]
-          mapM_ (putStrLn . show) . genElements $ regions 7 $ scoreGrid g
+          -- let score = scoreGrid g
+          --     showScore = showMap . flip Map.map score
+          -- putBeside $ map showScore [cardinal, ordinal, decide 5]
+          mapM_ (putStrLn . show) . genElements . regions 7 $ scoreGrid g
 
 ----- Data declarations
 data Score = Score { north :: Integer, east :: Integer
@@ -102,10 +99,3 @@ cardinal (Score n e _ _) =
       EQ -> C
       GT -> H
       LT -> V
-
-findContiguous :: Grid -> [Coord] -> [Coord]
-findContiguous g cs = recur cs []
-    where recur [] acc       = reverse acc
-          recur (c:rest) acc = case Map.lookup c (gridMap g) of
-                                 Nothing -> recur [] acc
-                                 Just _ -> recur rest $ c:acc

@@ -1,6 +1,6 @@
-module SparseRead ( Grid(..), Coord
+module SparseRead ( Grid(..), BoundingBox(..), Coord
                   , readSparse, sparsify
-                  , member, mooreNeighbors, allNeighbors, islands
+                  , member, mooreNeighbors, allNeighbors, islands, splitByVal, findContiguous, boxOf
                   , showGrid, showMap) where
 
 import Util
@@ -23,11 +23,12 @@ sparsify predicate str = Grid (toInteger . lengthI $ head ls) (toInteger $ lengt
               | predicate char == True = Map.insert (x, y) char memo
               | otherwise = memo
 
-showMap :: Show b => Integer -> Integer -> Map Coord b -> String
-showMap width height m = unlines [collectLine y | y <- [1..height]]
+showMap :: Show a => Map Coord a -> String
+showMap m = unlines [collectLine y | y <- [minY..maxY]]
     where collectLine y = concat [ case Map.lookup (x, y) m of
                                      Nothing -> " "
-                                     Just a -> show a | x <- [1..width]]
+                                     Just a -> show a | x <- [minX..maxX]]
+          (Box (minX, minY) (maxX, maxY)) = boxOf m
 
 showGrid :: Char -> Grid -> String
 showGrid bg g = unlines [collectLine y | y <- [1..h]]
@@ -48,7 +49,27 @@ mooreNeighbors (x, y) = [(x+x', y+y') | x' <- [-1..1], y' <- [-1..1], (x', y') /
 allNeighbors :: [Coord] -> [Coord]
 allNeighbors = nub . concatMap mooreNeighbors
 
------ Island-related stuff
+----- Grid Utility
+-- A bunch of functions that act on Map Coord a.
+-- They make sense here, because they'll need to change if
+-- we ever change the representation of a sparse image,
+-- and they MAY change if we change the representation of Coord
+
+data BoundingBox = Box { boxTopLeft :: Coord, boxTopRight :: Coord } deriving (Eq, Ord, Show, Read)
+
+minC :: Coord -> Coord -> Coord
+minC (x, y) (x', y') = (min x x', min y y')
+
+maxC :: Coord -> Coord -> Coord
+maxC (x, y) (x', y') = (max x x', max y y')
+
+boxOf :: Map Coord a -> BoundingBox
+boxOf m = if Map.null m
+          then Box (0, 0) (0, 0)
+          else Map.foldWithKey (\k _ (Box a b) -> Box (minC k a) (maxC k b)) (Box first first) m
+              where first = fst . head $ Map.toList m
+          
+
 islands :: Integer -> Map Coord a -> [Map Coord a]
 islands threshold grid = recur grid []
     where recur m acc
@@ -67,3 +88,17 @@ nextRegion m = recur start m Map.empty
           recur layer grid acc = let nextGrid = foldl (flip Map.delete) grid layer
                                      nextLayer = members nextGrid $ allNeighbors layer
                                  in recur nextLayer nextGrid $ foldl (\memo c -> Map.insert c (val c) memo) acc layer
+
+splitByVal :: Ord a => Map Coord a -> [Map Coord a]
+splitByVal m = map (\(k, v) -> Map.fromList $ zip v $ repeat k) $ splits
+    where splits = Map.toList $ Map.foldWithKey split Map.empty m 
+          split k v memo = Map.alter (ins k) v memo
+          ins new (Just v) =  Just $ new:v
+          ins new Nothing = Just [new]
+
+findContiguous :: Map Coord a -> [Coord] -> [Coord]
+findContiguous m cs = recur cs []
+    where recur [] acc       = reverse acc
+          recur (c:rest) acc = case Map.lookup c m of
+                                 Nothing -> recur [] acc
+                                 Just _ -> recur rest $ c:acc
