@@ -30,8 +30,12 @@ infI :: Integer
 infI = toInteger . round $ 1/0
 
 putBeside :: [String] -> IO ()
-putBeside strs = putLns $ map lines strs
-    where putLns lns
+putBeside strs = putLns $ map padOut ls
+    where ls = map lines strs
+          maxLen = foldl max 0 $ map length ls
+          padOut [] = take maxLen $ repeat ""
+          padOut lns = take maxLen $ lns ++ repeat (take (length $ head lns) $ repeat ' ')
+          putLns lns
               | any (==[]) lns = putStrLn ""
               | otherwise = do putStrLn . intercalate " + " $ map head lns
                                putLns $ map tail lns
