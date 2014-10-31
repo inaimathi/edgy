@@ -1,6 +1,6 @@
 module SparseRead ( Grid(..), BoundingBox(..), Coord
                   , readSparse, sparsify
-                  , member, allNeighbors, islands, splitByVal, findContiguous, boxOf
+                  , member, allNeighbors, islands, splitByVal, findContiguous, boxOf, distance
                   , showGrid, showMap) where
 
 import Util
@@ -65,6 +65,10 @@ minC (x, y) (x', y') = (min x x', min y y')
 
 maxC :: Coord -> Coord -> Coord
 maxC (x, y) (x', y') = (max x x', max y y')
+
+distance :: Coord -> Coord -> Integer
+distance (x, y) (x', y') = toInteger $ round . sqrt $ (maxX - minX) + (maxY - minY)
+    where [minX, maxX, minY, maxY] = map fromIntegral [min x x', max x x', min y y', max y y']
 
 boxOf :: Map Coord a -> BoundingBox
 boxOf m = if Map.null m

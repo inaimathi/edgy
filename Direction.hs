@@ -4,7 +4,7 @@ module Direction ( Score(..), Direction(..)
 
 import Util
 import SparseRead
-import Elements
+-- import Elements
 
 import Data.List (sortBy)
 import Data.Function (on)
@@ -31,37 +31,12 @@ scoreCoord m (x, y) = Score contigH contigV contigSW contigSE
           contigV = score [ ((repeat x), [y..])
                           , ((repeat x), [y, pred y..])]
 
------ Region-related stuff
-regions :: Integer -> Map Coord Score -> [Map Coord Direction]
-regions threshold score = concatMap (islands threshold) $ concatMap (splitByVal . flip Map.map score) [ordinal]
-
------ Generating elements
-genElements :: [Map Coord Direction] -> [Element]
-genElements [] = []
-genElements rs = map gen rs
-    where gen region = Line minCoord maxCoord
-              where dir = snd . head $ Map.toList region
-                    xFn (x, y) ((minX, minY), (maxX, maxY)) = 
-                        case dir of
-                          H -> ((min x minX, y), (max x maxX, y))
-                          V -> ((x, min y minY), (x, max y maxY))
-                          SE -> ((min x minX, min y minY), (max x maxX, max y maxY))
-                          SW -> ((min x minX, max y minY), (max x maxX, min y maxY))
-                          C -> ((min x minX, max y minY), (max x maxX, min y maxY))
-                    (minCoord, maxCoord) = extremeCoords xFn region
-
-
-extremeCoords :: (Coord -> (Coord, Coord) -> (Coord, Coord)) -> Map Coord a -> (Coord, Coord)
-extremeCoords fn m = Map.foldWithKey (\k _ memo -> fn k memo) (first, first) m
-    where first = fst . head $ Map.toList m
-
 ----- The main function
 main :: IO ()
 main = do g <- readSparse "test.txt"
-          -- let score = scoreGrid g
-          --     showScore = showMap . flip Map.map score
-          -- putBeside $ map showScore [cardinal, ordinal, decide 5]
-          mapM_ (putStrLn . show) . genElements . regions 7 $ scoreGrid g
+          let score = scoreGrid g
+              showScore = showMap . flip Map.map score
+          putBeside $ map showScore [cardinal, ordinal, decide 5]
 
 ----- Data declarations
 data Score = Score { north :: Integer, east :: Integer
@@ -87,7 +62,7 @@ thinRegion m
                     V -> findLongest V [col x | x <- [minX..maxX]]
                     SE -> findLongest SE [dr x | x <- [minX..maxX]]
                     SW -> findLongest SW [dl x | x <- [minX..maxX]]
-                    C -> m
+                    C -> Map.empty
                   where Box (minX, minY) (maxX, maxY) = boxOf m
                         findLongest dir cs = let longest = head $ byLen $ map (findContiguous m) cs
                                              in Map.fromList $ zip longest $ repeat dir
