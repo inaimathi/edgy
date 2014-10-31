@@ -1,6 +1,6 @@
 module SparseRead ( Grid(..), BoundingBox(..), Coord
                   , readSparse, sparsify
-                  , member, mooreNeighbors, allNeighbors, islands, splitByVal, findContiguous, boxOf
+                  , member, allNeighbors, islands, splitByVal, findContiguous, boxOf
                   , showGrid, showMap) where
 
 import Util
@@ -43,11 +43,14 @@ readSparse = fmap (sparsify (/='.')) . readFile
 member :: Grid -> Coord -> Bool
 member g c = Map.member c $ gridMap g
 
-mooreNeighbors :: Coord -> [Coord]
-mooreNeighbors (x, y) = [(x+x', y+y') | x' <- [-1..1], y' <- [-1..1], (x', y') /= (0,0)]
+-- mooreNeighbors :: Coord -> [Coord]
+-- mooreNeighbors (x, y) = [(x+x', y+y') | x' <- [-1..1], y' <- [-1..1], (x', y') /= (0,0)]
+
+vonNeumannNeighbors :: Coord -> [Coord]
+vonNeumannNeighbors (x, y) = [(x+x', y+y') | x' <- [-1..1], y' <- [-1..1], abs x' /= abs y']
 
 allNeighbors :: [Coord] -> [Coord]
-allNeighbors = nub . concatMap mooreNeighbors
+allNeighbors = nub . concatMap vonNeumannNeighbors
 
 ----- Grid Utility
 -- A bunch of functions that act on Map Coord a.
@@ -55,7 +58,7 @@ allNeighbors = nub . concatMap mooreNeighbors
 -- we ever change the representation of a sparse image,
 -- and they MAY change if we change the representation of Coord
 
-data BoundingBox = Box { boxTopLeft :: Coord, boxTopRight :: Coord } deriving (Eq, Ord, Show, Read)
+data BoundingBox = Box { boxTopLeft :: Coord, boxBottomRight :: Coord } deriving (Eq, Ord, Show, Read)
 
 minC :: Coord -> Coord -> Coord
 minC (x, y) (x', y') = (min x x', min y y')
