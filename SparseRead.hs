@@ -43,22 +43,14 @@ readSparse = fmap (sparsify (/='.')) . readFile
 member :: Grid -> Coord -> Bool
 member g c = Map.member c $ gridMap g
 
--- mooreNeighbors :: Coord -> [Coord]
--- mooreNeighbors (x, y) = [(x+x', y+y') | x' <- [-1..1], y' <- [-1..1], (x', y') /= (0,0)]
-
 vonNeumannNeighbors :: Coord -> [Coord]
 vonNeumannNeighbors (x, y) = [(x+x', y+y') | x' <- [-1..1], y' <- [-1..1], abs x' /= abs y']
 
 allNeighbors :: [Coord] -> [Coord]
 allNeighbors = nub . concatMap vonNeumannNeighbors
 
------ Grid Utility
--- A bunch of functions that act on Map Coord a.
--- They make sense here, because they'll need to change if
--- we ever change the representation of a sparse image,
--- and they MAY change if we change the representation of Coord
-
-data BoundingBox = Box { boxTopLeft :: Coord, boxBottomRight :: Coord } deriving (Eq, Ord, Show, Read)
+----- Coord utility
+-- Some functions that deal with the Coord type
 
 minC :: Coord -> Coord -> Coord
 minC (x, y) (x', y') = (min x x', min y y')
@@ -69,6 +61,14 @@ maxC (x, y) (x', y') = (max x x', max y y')
 distance :: Coord -> Coord -> Integer
 distance (x, y) (x', y') = toInteger $ round . sqrt $ ((maxX - minX) ** 2) + ((maxY - minY) ** 2)
     where [minX, maxX, minY, maxY] = map fromIntegral [min x x', max x x', min y y', max y y']
+
+----- Grid Utility
+-- A bunch of functions that act on Map Coord a.
+-- They make sense here, because they'll need to change if
+-- we ever change the representation of a sparse image,
+-- and they MAY change if we change the representation of Coord
+
+data BoundingBox = Box { boxTopLeft :: Coord, boxBottomRight :: Coord } deriving (Eq, Ord, Show, Read)
 
 boxOf :: Map Coord a -> BoundingBox
 boxOf m = if Map.null m

@@ -1,9 +1,6 @@
 ........................................
 .xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.
 .xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.
-.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.
-.xxxx..............................xxxx.
-.xxxx..............................xxxx.
 .xxxx..............................xxxx.
 .xxxx..............................xxxx.
 .xxxx..............................xxxx.

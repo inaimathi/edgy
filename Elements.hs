@@ -5,7 +5,6 @@ module Elements ( Element(..)
 import Util
 import SparseRead
 import Direction
-import Multicolor
 
 import qualified Data.Maybe as Maybe 
 import Data.Function (on)
@@ -84,6 +83,11 @@ thinLines m
                         col x = [(x, y) | y <- [minY..maxY]]
 
 ---------- Line-based generation
+getDirections :: [Map Coord a] -> [Map Coord Direction]
+getDirections ms = concatMap (direct [cardinal, ordinal]) ms 
+    where direct fns m = let scored = scoreMap m
+                         in map (\fn -> Map.map fn scored) fns
+
 computeElems :: Map Coord a -> [Element]
 computeElems m = recur . byDistance . Maybe.mapMaybe toInternal . concatMap (islands 7) . concatMap splitByVal $ getDirections [m]
     where toInternal region = case thinLines region of
@@ -104,7 +108,7 @@ computeFromGrid :: Integer -> Grid -> [Element]
 computeFromGrid threshold g = concatMap computeElems . concatMap (islands threshold) . splitByVal $ gridMap g
 
 main :: IO ()
-main = do f <- readSparse "multi.txt"
+main = do f <- readSparse "test3.txt"
           let elems = align $ computeFromGrid 7 f
           putStrLn . show $ map (\(Line a b) -> distance a b) elems
           svgWrite "test.svg" elems
