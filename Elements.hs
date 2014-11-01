@@ -54,6 +54,10 @@ align es = foldl (\memo pt -> alignY pt memo) xAligned pts
                                                        then (x, y)
                                                        else (x', y)
 
+resolveOverlaps :: [Element] -> [Element]
+-- TODO; should combine/filter overlapping lines.
+resolveOverlaps es = undefined
+
 ---------- Line-based thinning
 thinLines :: Map Coord Direction -> Maybe Element
 thinLines m
