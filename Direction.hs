@@ -33,7 +33,7 @@ scoreCoord m (x, y) = Score contigH contigV contigSW contigSE
 
 ----- The main function
 main :: IO ()
-main = do g <- readSparse "test.txt"
+main = do g <- readSparse "test2.txt"
           let score = scoreGrid g
               showScore = showMap . flip Map.map score
           putBeside $ map showScore [cardinal, ordinal, decide 5]

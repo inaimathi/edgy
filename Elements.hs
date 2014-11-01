@@ -42,16 +42,26 @@ fbWrite fname elems = writeFile fname . concat $ map (uncurry fbShow) pairs
 thinLines :: Map Coord Direction -> Maybe Element
 thinLines m
     | Map.null m = Nothing
-    | otherwise = case snd . head $ Map.toList m of
-                    H -> Just $ Line (minX, mid minY maxY) (maxX, mid minY maxY)
-                    V -> Just $ Line (mid minX maxX, minY) (mid minX maxX, maxY)
+    | otherwise = case dir of
+                    H -> let longest = findLongest [ln y | y <- [minY..maxY]]
+                             Box (minX', _) (maxX', _) = boxOf longest
+                         in Just $ Line (minX', mid minY maxY) (maxX', mid minY maxY)
+                    V -> let longest = findLongest [col x | x <- [minX..maxX]]
+                             Box (_, minY') (_, maxY') = boxOf longest
+                         in Just $ Line (mid minX maxX, minY') (mid minX maxX, maxY')
                     SE -> Just $ Line (minX, minY) (maxX, maxY)
                     SW -> Just $ Line (maxX, minY) (minX, maxY)
                     C -> Nothing
-                  where Box (minX, minY) (maxX, maxY) = boxOf m
+                  where dir = snd . head $ Map.toList m
+                        Box (minX, minY) (maxX, maxY) = boxOf m
                         mid a b = toInteger . round $ a' + ((b' - a') / 2)
                                   where a' = fromIntegral a
                                         b' = fromIntegral b
+                        byLen = sortBy (flip compare `on` length)
+                        findLongest cs = let longest = head $ byLen $ map (findContiguous m) cs
+                                         in Map.fromList $ zip longest $ repeat dir
+                        ln y = [(x, y) | x <- [minX..maxX]]
+                        col x = [(x, y) | y <- [minY..maxY]]
 
 ---------- Line-based generation
 computeElems :: Map Coord a -> [Element]
@@ -74,7 +84,7 @@ computeFromGrid :: Integer -> Grid -> [Element]
 computeFromGrid threshold g = concatMap computeElems . concatMap (islands threshold) . splitByVal $ gridMap g
 
 main :: IO ()
-main = do f <- readSparse "multi.txt"
+main = do f <- readSparse "test2.txt"
           let elems = computeFromGrid 7 f
           putStrLn . show $ map (\(Line a b) -> distance a b) elems
           svgWrite "test.svg" elems
