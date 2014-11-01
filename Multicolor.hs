@@ -30,7 +30,7 @@ getLines m = recur . byThinnedLen . map toInternal . concatMap (islands 7) . con
                                     else filterOut m rest
 
 main :: IO ()
-main = do f <- readSparse "test2.txt"
+main = do f <- readSparse "multi.txt"
           putBeside . map showMap . getDirections $ separate 7 f
           let thinnedLines = concatMap getLines $ separate 7 f
           putBeside $ map showMap thinnedLines

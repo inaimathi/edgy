@@ -67,7 +67,7 @@ maxC :: Coord -> Coord -> Coord
 maxC (x, y) (x', y') = (max x x', max y y')
 
 distance :: Coord -> Coord -> Integer
-distance (x, y) (x', y') = toInteger $ round . sqrt $ (maxX - minX) + (maxY - minY)
+distance (x, y) (x', y') = toInteger $ round . sqrt $ ((maxX - minX) ** 2) + ((maxY - minY) ** 2)
     where [minX, maxX, minY, maxY] = map fromIntegral [min x x', max x x', min y y', max y y']
 
 boxOf :: Map Coord a -> BoundingBox
