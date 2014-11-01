@@ -38,6 +38,22 @@ fbWrite :: FilePath -> [Element] -> IO ()
 fbWrite fname elems = writeFile fname . concat $ map (uncurry fbShow) pairs
     where pairs = zip (map ((":FACT"++) . show) [1..]) elems
 
+---------- Post-generation Modification
+align :: [Element] -> [Element]
+align es = foldl (\memo pt -> alignY pt memo) xAligned pts
+    where xAligned = foldl (\memo pt -> alignX pt memo) es pts 
+          pts = concatMap (\(Line a b) -> [a, b]) es
+          alignY (_, y) elems = map (pullY y) elems
+          pullY y (Line a b) = Line (pullPtY a) (pullPtY b)
+                               where pullPtY (x, y') = if (abs $ y - y') < 3
+                                                       then (x, y)
+                                                       else (x, y')
+          alignX (x, _) elems = map (pullX x) elems
+          pullX x (Line a b) = Line (pullPtX a) (pullPtX b)
+                               where pullPtX (x', y) = if (abs $ x - x') < 3
+                                                       then (x, y)
+                                                       else (x', y)
+
 ---------- Line-based thinning
 thinLines :: Map Coord Direction -> Maybe Element
 thinLines m
@@ -84,8 +100,8 @@ computeFromGrid :: Integer -> Grid -> [Element]
 computeFromGrid threshold g = concatMap computeElems . concatMap (islands threshold) . splitByVal $ gridMap g
 
 main :: IO ()
-main = do f <- readSparse "test2.txt"
-          let elems = computeFromGrid 7 f
+main = do f <- readSparse "multi.txt"
+          let elems = align $ computeFromGrid 7 f
           putStrLn . show $ map (\(Line a b) -> distance a b) elems
           svgWrite "test.svg" elems
           mapM_ (putStrLn . show) elems
