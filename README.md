@@ -148,7 +148,7 @@ where line segments `A->B` and `C->D` have the same slope and overlap partially,
 
 - The current examples and experimentation are based on `ascii` representations of our target images. I'm assuming that once I figure out the principles, porting them over to a pixel context won't prove too difficult (in fact, having the additional hue/saturation/RGB data around might help analysis once we get to that stage).
 - The current examples all have a much higher `line-width` : `image-size` ratio than actuall inputs will have. This _complicates_ generation slightly, and makes it pretty hard to disambiguate circles from polygons. I expect that to become easier as we lower the ratio.
-- These are not experiments for generic scene carving/object identification. The idea here is to take dead bitmaps and generate flow diagrams for [visual programs](http://langnostic.inaimathi.ca/article?name=the-big-problem-and-visual-compilers.html) from them. This means we're dealing with a very restricted set of images:
+- These are not experiments for generic object identification. The idea here is to take dead bitmaps and generate flow diagrams for [visual programs](http://langnostic.inaimathi.ca/article?name=the-big-problem-and-visual-compilers.html) from them. This means we're dealing with a very restricted set of images:
 	- All white background
 	- Some sparse text
 	- Only line drawings
