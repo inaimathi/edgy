@@ -69,7 +69,7 @@ computeElements threshold m = recur . byDistance . Maybe.mapMaybe toInternal . c
           len (Line a b) = distance a b
           recur [] = []
           recur (r:rest) = (snd r) : (recur . byDistance $ filterOut (fst r) rest)
-          filterOut m [] = []
+          filterOut _ [] = []
           filterOut m (r:rest) = let filtered = Map.difference (fst r) m
                                      thinned = thinLines filtered
                                  in case (sizeI filtered > threshold, thinned) of
@@ -110,4 +110,7 @@ processFile fname = do f <- readSparse fname
                        mapM_ (putStrLn . show) elems
 
 main :: IO ()
-main = mapM_ processFile ["test.txt", "test2.txt", "test3.txt", "multi.txt"]
+main = mapM_ processFile [ "test-data/single-color.txt"
+                         , "test-data/multi-color.txt"
+                         , "test-data/pentagon.txt"
+                         , "test-data/pentagon-multiline-to-square.txt"]

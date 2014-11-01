@@ -14,7 +14,7 @@ scoreGrid :: Grid a -> Grid Score
 scoreGrid m = Map.mapWithKey (\k _ -> scoreCoord m k) m
 
 scoreCoord :: Grid a -> Coord -> Score
-scoreCoord m (x, y) = Score contigH contigV contigSW contigSE
+scoreCoord m (x, y) = (contigH, contigV, contigSW, contigSE)
     where contig (xs, ys) = findContiguous m $ zip xs ys
           score = lengthI . concatMap contig
           contigSW = score [ ([x, pred x..], [y, pred y..])
@@ -27,21 +27,20 @@ scoreCoord m (x, y) = Score contigH contigV contigSW contigSE
                           , ((repeat x), [y, pred y..])]
 
 ----- Score
-data Score = Score { north :: Integer, east :: Integer
-                   , southWest :: Integer, southEast :: Integer } deriving (Eq, Ord)
+type Score = (Integer, Integer, Integer, Integer)
 
 ----- Directions
 data Direction = H | V | SW | SE | C deriving (Eq, Ord)
 
 ordinal :: Score -> Direction
-ordinal (Score _ _ sw se) = 
+ordinal (_, _, sw, se) = 
     case se `compare` sw of
       EQ -> C
       GT -> SW
       LT -> SE
 
 cardinal :: Score -> Direction
-cardinal (Score n e _ _) = 
+cardinal (n, e, _, _) = 
     case n `compare` e of
       EQ -> C
       GT -> H
