@@ -1,8 +1,9 @@
-module Elements ( Element(..)
+module Elements ( Element, computeElements
                 , fbShow, fbWrite
                 , thinLines) where
 
 import Util
+import Model
 import SparseRead
 import Direction
 
@@ -58,7 +59,7 @@ resolveOverlaps :: [Element] -> [Element]
 resolveOverlaps es = undefined
 
 ---------- Line-based thinning
-thinLines :: Map Coord Direction -> Maybe Element
+thinLines :: Grid Direction -> Maybe Element
 thinLines m
     | Map.null m = Nothing
     | otherwise = case dir of
@@ -83,13 +84,8 @@ thinLines m
                         col x = [(x, y) | y <- [minY..maxY]]
 
 ---------- Line-based generation
-getDirections :: [Map Coord a] -> [Map Coord Direction]
-getDirections ms = concatMap (direct [cardinal, ordinal]) ms 
-    where direct fns m = let scored = scoreMap m
-                         in map (\fn -> Map.map fn scored) fns
-
-computeElems :: Map Coord a -> [Element]
-computeElems m = recur . byDistance . Maybe.mapMaybe toInternal . concatMap (islands 7) . concatMap splitByVal $ getDirections [m]
+computeElements :: Integer -> Grid a -> [Element]
+computeElements threshold m = recur . byDistance . Maybe.mapMaybe toInternal . concatMap (islands threshold) . concatMap splitByVal $ getDirections m
     where toInternal region = case thinLines region of
                                 Just ln -> Just (region, ln)
                                 Nothing -> Nothing                               
@@ -100,12 +96,12 @@ computeElems m = recur . byDistance . Maybe.mapMaybe toInternal . concatMap (isl
           filterOut m [] = []
           filterOut m (r:rest) = let filtered = Map.difference (fst r) m
                                      thinned = thinLines filtered
-                                 in case (Map.size filtered > 7, thinned) of
+                                 in case (sizeI filtered > threshold, thinned) of
                                       (True, Just ln) -> (filtered, ln) : (filterOut m rest)
                                       _ -> filterOut m rest
 
-computeFromGrid :: Integer -> Grid -> [Element]
-computeFromGrid threshold g = concatMap computeElems . concatMap (islands threshold) . splitByVal $ gridMap g
+computeFromGrid :: Ord a => Integer -> Grid a -> [Element]
+computeFromGrid threshold g = concatMap (computeElements threshold) . concatMap (islands threshold) $ splitByVal g
 
 main :: IO ()
 main = do f <- readSparse "test3.txt"
