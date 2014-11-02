@@ -36,6 +36,14 @@ fbWrite fname elems = writeFile fname . concat $ map (uncurry fbShow) pairs
     where pairs = zip (map ((":FACT"++) . show) [1..]) elems
 
 ---------- Main and related utility
+main :: IO ()
+main = mapM_ (processFile 6) [ "test-data/single-color.txt"
+                             , "test-data/multi-color.txt"
+                             , "test-data/pentagon.txt"
+                             , "test-data/pentagon-multiline-to-square.txt"
+                             , "test-data/circle-arrow-rect.txt"
+                             ]
+
 processFile :: Integer -> FilePath -> IO ()
 processFile threshold fname = do f <- readSparse fname
                                  putStrLn $ "\n=>" ++ fname
@@ -44,10 +52,3 @@ processFile threshold fname = do f <- readSparse fname
                                  fbWrite (replaceExtension fname "base") elems
                                  svgWrite (replaceExtension fname "svg") elems
                                  mapM_ (putStrLn . show) elems
-
-main :: IO ()
-main = mapM_ (uncurry processFile) [ (6, "test-data/single-color.txt")
-                                   , (6, "test-data/multi-color.txt")
-                                   , (6, "test-data/pentagon.txt")
-                                   , (6, "test-data/pentagon-multiline-to-square.txt")
-                                   , (6, "test-data/circle-arrow-rect.txt")]
