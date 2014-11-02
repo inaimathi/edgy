@@ -4,7 +4,7 @@ import Model
 import Elements
 import SparseRead
 
-import System.FilePath (replaceExtension)
+import System.FilePath (replaceExtension, dropExtension)
 
 ---------- File emission
 svgShow :: Element -> String
@@ -32,8 +32,15 @@ fbShow factId (Line (x, y) (x', y')) =
            , "(", factId, " :END (", show x', " ", show y', "))\n"]
 
 fbWrite :: FilePath -> [Element] -> IO ()
-fbWrite fname elems = writeFile fname . concat $ map (uncurry fbShow) pairs
+fbWrite fname elems = writeFile fname contents
     where pairs = zip (map ((":FACT"++) . show) [1..]) elems
+          contents = concat $ meta : (map (uncurry fbShow) pairs)
+          len = length elems
+          nameId = ":FACT" ++ (show $ succ len)
+          meta = concat [ "(:FACT0 :NEXT-ID NIL)\n"
+                        , "(:FACT0 :VALUE ", show . succ $ succ len, ")\n"
+                        , "(", nameId, " :DIAGRAM-NAME NIL)\n"
+                        , "(", nameId, " :VALUE ", show $ dropExtension fname, ")\n"]
 
 ---------- Main and related utility
 main :: IO ()
