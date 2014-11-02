@@ -1,4 +1,4 @@
-module Model ( Coord, minC, maxC, distance, findContiguous, allNeighbors, member
+module Model ( Coord, minC, maxC, distance, findContiguous, dropLeadingEmpties, allNeighbors, member
              , BoundingBox(..), boxOf
              , Grid, showGrid, islands, splitByVal) where
 
@@ -27,6 +27,9 @@ findContiguous m cs = recur cs []
           recur (c:rest) acc = case Map.lookup c m of
                                  Nothing -> recur [] acc
                                  Just _ -> recur rest $ c:acc
+
+dropLeadingEmpties :: Eq a => Grid a -> [Coord] -> [Coord]
+dropLeadingEmpties m cs = dropWhile ((==Nothing) . flip Map.lookup m) cs
 
 member :: Grid a -> Coord -> Bool
 member g c = Map.member c g
