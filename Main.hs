@@ -19,7 +19,8 @@ svgWrite fname elems = writeFile fname contents
                             , "xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\">"
                             , "<g stroke=\"green\">"
                             , concatMap svgShow elems
-                            , "</g></svg>" ]
+                            , "</g></svg>" 
+                            ]
           ((x, y), (x', y')) = foldl (\(a', b') (Line a b) -> (minC b (minC a a'), maxC a (maxC b b'))) first elems
           first = let (Line a b) = head elems
                   in (a, b)
@@ -29,33 +30,35 @@ fbShow :: String -> Element -> String
 fbShow factId (Line (x, y) (x', y')) = 
     concat [ "(", factId, " :LINE-SEGMENT NIL)\n"
            , "(", factId, " :START (", show x, " ", show y, "))\n"
-           , "(", factId, " :END (", show x', " ", show y', "))\n"]
+           , "(", factId, " :END (", show x', " ", show y', "))\n"
+           ]
 
 fbWrite :: FilePath -> [Element] -> IO ()
 fbWrite fname elems = writeFile fname contents
-    where pairs = zip (map ((":FACT"++) . show) [1..]) elems
+    where pairs = zip (map ((":FACT"++) . show) [2..]) elems
           contents = concat $ meta : (map (uncurry fbShow) pairs)
-          len = length elems
-          nameId = ":FACT" ++ (show $ succ len)
           meta = concat [ "(:FACT0 :NEXT-ID NIL)\n"
-                        , "(:FACT0 :VALUE ", show . succ $ succ len, ")\n"
-                        , "(", nameId, " :DIAGRAM-NAME NIL)\n"
-                        , "(", nameId, " :VALUE ", show $ dropExtension fname, ")\n"]
+                        , "(:FACT0 :VALUE ", show $ 2 + length elems, ")\n"
+                        , "(:FACT1 :DIAGRAM-NAME NIL)\n"
+                        , "(:FACT1 :VALUE ", show $ dropExtension fname, ")\n"
+                        ]
 
 ---------- Main and related utility
 main :: IO ()
-main = mapM_ (processFile 6) [ "test-data/single-color.txt"
-                             , "test-data/multi-color.txt"
-                             , "test-data/pentagon.txt"
-                             , "test-data/pentagon-multiline-to-square.txt"
-                             , "test-data/circle-arrow-rect.txt"
-                             ]
+main = mapM_ (processFile 3 6) [ "test-data/single-color.txt"
+                               , "test-data/multi-color.txt"
+                               , "test-data/pentagon.txt"
+                               , "test-data/pentagon-multiline-to-square.txt"
+                               , "test-data/circle-arrow-rect.txt"
+                               ]
 
-processFile :: Integer -> FilePath -> IO ()
-processFile threshold fname = do f <- readSparse fname
-                                 putStrLn $ "\n=>" ++ fname
-                                 let alignThresh = threshold `div` 2
-                                     elems = align alignThresh $ getElements threshold f
-                                 fbWrite (replaceExtension fname "base") elems
-                                 svgWrite (replaceExtension fname "svg") elems
-                                 mapM_ (putStrLn . show) elems
+-- System.Process.readProcess
+-- 
+
+processFile :: Integer -> Integer -> FilePath -> IO ()
+processFile alignThreshold threshold fname = do f <- readSparse fname
+                                                putStrLn $ "\n=>" ++ fname
+                                                let elems = align alignThreshold $ getElements threshold f
+                                                fbWrite (replaceExtension fname "base") elems
+                                                svgWrite (replaceExtension fname "svg") elems
+                                                mapM_ (putStrLn . show) elems

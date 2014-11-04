@@ -22,6 +22,6 @@ putBeside strs = putLns $ map padOut ls
                                putLns $ map tail lns
 
 splitEvery :: Int -> [a] -> [[a]]
-splitEvery n lst = recur lst []
-    where recur [] acc = reverse $ acc
-          recur l acc = recur (drop n l) $ (take n l):acc
+splitEvery n lst = recur lst
+    where recur [] = []
+          recur l = take n l : (recur $ drop n l)
