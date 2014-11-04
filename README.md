@@ -83,7 +83,7 @@ The circle might be composed of curves rather than straight lines. The output da
 
 ### Direction mapping
 
-This is the principle approach I've settled on for generating line vectors from bitmap line drawings. The relevant files are in [`Direction.hs`](https://github.com/Inaimathi/EAF/blob/master/Direction.hs). The main function defined is `getDirections`, which takes a sparse image and returns its cardinal and ordinal direction maps.
+This is the principal approach I've settled on for generating line vectors from bitmap line drawings. The relevant files are in [`Direction.hs`](https://github.com/Inaimathi/EAF/blob/master/Direction.hs). The main function defined is `getDirections`, which takes a sparse image and returns its cardinal and ordinal direction maps.
 
        ||                          +    \/                         
       --------------------         +   \o\////\\\\///\\\\o/        
@@ -135,9 +135,9 @@ This is the principle approach I've settled on for generating line vectors from 
 
 Using this information, we can separate contiguous regions into islands, and assemble the dominating ones (by size) into a series of lines that represent the same image. That's done in the [`Elements.hs` file](https://github.com/Inaimathi/EAF/blob/master/Elements.hs), and the result of this operation is a series of `Element`s (just `Line`s at the moment, but `Ellipse` and/or `Curve`, and probably `Text` are coming in the future). Once we've generated elements, we align their points within a certain tolerance; things that _almost_ line up are made to line up precisely, on the assumption that our input is coming from humans.
 
-The current output of this process can be seen in the [`test-data/` folder](https://github.com/Inaimathi/EAF/tree/master/test-data). Each `.txt` file is an input, and the corresponding output is in the similarly named `.svg` file. The output for the above example input can be found [here](https://github.com/Inaimathi/EAF/blob/master/test-data/single-color.svg).
+The current output of this process can be seen in the [`test-data/` folder](https://github.com/Inaimathi/EAF/tree/master/test-data). Each `.txt` file is an input, and the corresponding output is in the similarly named `.svg` file. The current output for the above example input can be found [here](https://github.com/Inaimathi/EAF/blob/master/test-data/single-color.svg).
 
-###### Still TODO
+##### Still TODO
 
 **Tune up the alignment routine**
 
@@ -159,16 +159,16 @@ We currently support `.ppm`, `.pgm` and `.txt` (ascii art) files (and fairly nai
 
 **Text support**
 
-Text is currently unsupported. I'm thining we can do a line-art processing step, followed by running occupied likely text areas through something like [`tesseract`](http://code.google.com/p/tesseract-ocr/) to get textual data.
+Text is currently unsupported. I'm thinking we can do a line-art processing step, followed by running occupied non-line areas through something like [`tesseract`](http://code.google.com/p/tesseract-ocr/) to get textual data.
 
 **Better performance**
 
-At the moment, crunching a ~1mb file takes a few seconds. Ideally, it would be fast enough to support interactive conversion speeds, but I'd settle for sub-second processing of most target files.
+At the moment, crunching a ~1mb file takes a few seconds. Ideally, it would be fast enough to support interactive conversion speeds, but I'd settle for sub-second processing of most target files. Also, note that the use case for this project is to be step 1 of `n` in a visual compilation pipeline. Which means we can't really afford to be slow if we want that style of compilation to be bearable.
 
 ### General Notes
 
-- The current examples and experimentation are based on `ascii` representations of our target images. I'm assuming that once I figure out the principles, porting them over to a pixel context won't prove too difficult (in fact, having the additional hue/saturation/RGB data around might help analysis once we get to that stage).
-- The current examples all have a much higher `line-width` : `image-size` ratio than actuall inputs will have. This _complicates_ generation slightly, and makes it pretty hard to disambiguate circles from polygons. I expect that to become easier as we lower the ratio.
+- The current examples and experimentation are mainly based on `ascii` representations of our target images. I'm assuming that once I figure out the principles, porting them over to a pixel context won't prove too difficult.
+- The current examples all have a much higher `line-width` : `image-size` ratio than actual inputs will. This _complicates_ generation slightly, and makes it pretty hard to disambiguate circles from polygons. I expect that to become easier as we lower the ratio.
 - These are not experiments for generic object identification. The idea here is to take dead bitmaps and generate flow diagrams for [visual programs](http://langnostic.inaimathi.ca/article?name=the-big-problem-and-visual-compilers.html) from them. This means we're dealing with a very restricted set of images:
 	- All white background
 	- Some sparse text
