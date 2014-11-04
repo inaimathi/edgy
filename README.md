@@ -139,10 +139,12 @@ The current output of this process can be seen in the [`test-data/` folder](http
 
 ###### Still TODO
 
-*Tune up the alignment routine*
+**Tune up the alignment routine**
+
 We currently align items with similar `x` and `y` coords globally. This means that we need to keep the alignment threshold relatively low in order to avoid radical changes, which results in some points that should be aligned being left separate. What we probably _should_ do is align points are near each other in both axes with a higher threshold, then do the global `x` and `y` alignment at the lower threshold.
 
-*Deal with overlaps*
+**Deal with overlaps**
+
 We need to do is deal with overlapping elements somehow. In particular, if a previous processing step outputs something like
 
     A               B
@@ -151,13 +153,16 @@ We need to do is deal with overlapping elements somehow. In particular, if a pre
 
 where line segments `A->B` and `C->D` have the same slope and overlap partially, we'd really like to replace them with the line segment `A->D` instead. The equivalent applies to lines going in all directions.
 
-*More input types*
+**More input types**
+
 We currently support `.ppm`, `.pgm` and `,txt` (ascii art) files. It'd be nice to have `.jpg` and `.png` reading support. The Haskell ecosystem fights us on this, because what we really want coming out the other side is a sparse representation (as of this writing, a `Map Coord a`), rather than a `Vector`. The libraries I've been able to find either don't work outright ([`unm-hip`](https://hackage.haskell.org/package/unm-hip-0.3.1.6/docs/Data-Image-Boxed.html#t:BoxedImage) throws what look like pretty deep errors when I try to get the pixel vector out of one of its images), or work really _really_ hard to prevent you from getting at raw pixel data ([`JuicyPixels`](http://hackage.haskell.org/package/JuicyPixels) provides a lot of infrastructure for mapping over pixel information, but they all keep the output locked into the `DynamicImage` type, which does us no good whatsoever in this project).
 
-*Text support*
+**Text support**
+
 Text is currently unsupported. I'm thining we can do a line-art processing step, followed by running occupied likely text areas through something like [`tesseract`](http://code.google.com/p/tesseract-ocr/) to get textual data.
 
-*Better performance*
+**Better performance**
+
 At the moment, crunching a ~1mb file takes a few seconds. Ideally, it would be fast enough to support interactive conversion speeds, but I'd settle for sub-second processing of most target files.
 
 ### General Notes
