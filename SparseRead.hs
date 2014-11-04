@@ -55,7 +55,7 @@ readPgm fname = do h <- openBinaryFile fname ReadMode
                    img <- hGetContents h
                    let len = width
                        lns = zip [0..] . map (zip [0..]) . splitEvery len $ map ord img
-                       ln (y, l) = map (\(x, _) -> ((x, y), 'x')) $ filter ((230>) . snd) l
+                       ln (y, l) = map (\(x, _) -> ((x, y), 'x')) $ filter ((190>) . snd) l
                    return . Map.fromList $ concatMap ln lns
 
 readPpm :: FilePath -> IO (Grid Char)

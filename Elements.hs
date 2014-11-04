@@ -35,12 +35,8 @@ thinLines :: Grid Direction -> Maybe Element
 thinLines m
     | Map.null m = Nothing
     | otherwise = case dir of
-                    H -> let longest = findLongest [ln y | y <- [minY..maxY]]
-                             Box (minX', _) (maxX', _) = boxOf longest
-                         in Just $ Line (minX', mid minY maxY) (maxX', mid minY maxY)
-                    V -> let longest = findLongest [col x | x <- [minX..maxX]]
-                             Box (_, minY') (_, maxY') = boxOf longest
-                         in Just $ Line (mid minX maxX, minY') (mid minX maxX, maxY')
+                    H -> Just $ Line (minX, mid minY maxY) (maxX, mid minY maxY)
+                    V -> Just $ Line (mid minX maxX, minY) (mid minX maxX, maxY)
                     SE -> Just $ Line (minX, minY) (maxX, maxY)
                     SW -> Just $ Line (maxX, minY) (minX, maxY)
                     C -> Nothing
@@ -49,11 +45,6 @@ thinLines m
                         mid a b = toInteger . round $ a' + ((b' - a') / 2)
                                   where a' = fromIntegral a
                                         b' = fromIntegral b
-                        byLen = sortBy (flip compare `on` length)
-                        findLongest cs = let longest = head $ byLen $ map (findContiguous m . dropLeadingEmpties m) cs
-                                         in Map.fromList $ zip longest $ repeat dir
-                        ln y = [(x, y) | x <- [minX..maxX]]
-                        col x = [(x, y) | y <- [minY..maxY]]
 
 computeElements :: Integer -> Grid a -> [Element]
 computeElements threshold m = recur . byDistance . Maybe.mapMaybe toInternal . concatMap (islands threshold) . concatMap splitByVal $ getDirections m

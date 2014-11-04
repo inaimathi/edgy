@@ -133,16 +133,32 @@ This is the principle approach I've settled on for generating line vectors from 
                                    +                               
                                    +                               
 
-Using this information, we can separate contiguous regions into islands, and assemble the dominating ones (by size) into a series of lines that represent the same image. That's done in the [`Elements.hs` file](https://github.com/Inaimathi/EAF/blob/master/Elements.hs), and the result of this operation is a series of `Element`s (just `Line`s at the moment, but `Ellipse` and/or `Curve`, and probably `Text` are coming in the future). Once we've generated elements, we align their points within a certain tolerance; things that _almost_ line up are made to line up precisel, on the assumption that our input is coming from humans.
+Using this information, we can separate contiguous regions into islands, and assemble the dominating ones (by size) into a series of lines that represent the same image. That's done in the [`Elements.hs` file](https://github.com/Inaimathi/EAF/blob/master/Elements.hs), and the result of this operation is a series of `Element`s (just `Line`s at the moment, but `Ellipse` and/or `Curve`, and probably `Text` are coming in the future). Once we've generated elements, we align their points within a certain tolerance; things that _almost_ line up are made to line up precisely, on the assumption that our input is coming from humans.
 
 The current output of this process can be seen in the [`test-data/` folder](https://github.com/Inaimathi/EAF/tree/master/test-data). Each `.txt` file is an input, and the corresponding output is in the similarly named `.svg` file. The output for the above example input can be found [here](https://github.com/Inaimathi/EAF/blob/master/test-data/single-color.svg).
 
-The next thing we need to do is deal with overlapping elements somehow. In particular, if a previous processing step outputs something like
+###### Still TODO
 
-    A          C    B          D
+*Tune up the alignment routine*
+We currently align items with similar `x` and `y` coords globally. This means that we need to keep the alignment threshold relatively low in order to avoid radical changes, which results in some points that should be aligned being left separate. What we probably _should_ do is align points are near each other in both axes with a higher threshold, then do the global `x` and `y` alignment at the lower threshold.
+
+*Deal with overlaps*
+We need to do is deal with overlapping elements somehow. In particular, if a previous processing step outputs something like
+
+    A               B
     +----------+----+----------+
+               C               D
 
 where line segments `A->B` and `C->D` have the same slope and overlap partially, we'd really like to replace them with the line segment `A->D` instead. The equivalent applies to lines going in all directions.
+
+*More input types*
+We currently support `.ppm`, `.pgm` and `,txt` (ascii art) files. It'd be nice to have `.jpg` and `.png` reading support. The Haskell ecosystem fights us on this, because what we really want coming out the other side is a sparse representation (as of this writing, a `Map Coord a`), rather than a `Vector`. The libraries I've been able to find either don't work outright ([`unm-hip`](https://hackage.haskell.org/package/unm-hip-0.3.1.6/docs/Data-Image-Boxed.html#t:BoxedImage) throws what look like pretty deep errors when I try to get the pixel vector out of one of its images), or work really _really_ hard to prevent you from getting at raw pixel data ([`JuicyPixels`](http://hackage.haskell.org/package/JuicyPixels) provides a lot of infrastructure for mapping over pixel information, but they all keep the output locked into the `DynamicImage` type, which does us no good whatsoever in this project).
+
+*Text support*
+Text is currently unsupported. I'm thining we can do a line-art processing step, followed by running occupied likely text areas through something like [`tesseract`](http://code.google.com/p/tesseract-ocr/) to get textual data.
+
+*Better performance*
+At the moment, crunching a ~1mb file takes a few seconds. Ideally, it would be fast enough to support interactive conversion speeds, but I'd settle for sub-second processing of most target files.
 
 ### General Notes
 
@@ -153,3 +169,4 @@ where line segments `A->B` and `C->D` have the same slope and overlap partially,
 	- Some sparse text
 	- Only line drawings
 - The idea is to get something practically workable, and not necessarily start out with the general case solution. In particular, I'm perfectly willing to "cheat" by adding the restriction that lines/arrows and shapes be represented in different colors. So as far as I'm concerned, another perfectly legitimate example is something like [this](https://github.com/Inaimathi/EAF/blob/master/test-data/multi-color.txt). At the current level of experimentation, it doesn't seem to make as big a difference as I thought it might (as you can see by comparing [this](https://github.com/Inaimathi/EAF/blob/master/test-data/single-color.txt)->[this](https://github.com/Inaimathi/EAF/blob/master/test-data/single-color.svg) to [this](https://github.com/Inaimathi/EAF/blob/master/test-data/multi-color.txt)->[this](https://github.com/Inaimathi/EAF/blob/master/test-data/multi-color.svg).) There's really no reason _not_ to support it, since the exact same machinery can handle single and multi-color inputs, but I don't think I'll be putting emphasis on color coded images for the moment.
+- It might seem that thinning Cardinal lines by finding the longest contiguous line would be a pretty good idea, because it would reduce flash. Unfortunately, it also tends to truncate long, _almost_ straight lines drawn by hand. It seems that Cardinal lines should be thinned exactly like Ordinal lines; by doing a mild transformation on their bounding box.
