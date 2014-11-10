@@ -36,19 +36,6 @@ getHeaders h = do ln1 <- getNonComment h
                   let [w, h] = map read $ words ln2
                   return $ (ln1, (w, h), read ln3)
 
--- readPB :: ((String, (Int, Int), Int) -> [Char] -> [(Coord, Char)]) -> FilePath -> IO (Grid Char)
--- readPB fn fname = do h <- openBinaryFile fname ReadMode
---                      hdr <- getHeaders h
---                      img <- hGetContents h
---                      return . Map.fromList $ fn hdr img
-
--- readPgm :: FilePath -> IO (Grid Char)
--- readPgm = readPB internal
---     where internal :: (String, (Int, Int), Int) -> [Char] -> [(Coord, Char)]
---           internal (_, (width, _), _) img = concatMap ln lns
---               where lns = zip [0..] . map (zip [0..]) . splitEvery width $ map ord img
---                     ln (y, l) = map (\(x, _) -> ((x, y), 'x')) $ filter ((230>) . snd) l
-
 readPgm :: FilePath -> IO (Grid Char)
 readPgm fname = do h <- openBinaryFile fname ReadMode
                    (_, (width, _), _) <- getHeaders h
@@ -69,5 +56,3 @@ readPpm fname = do h <- openBinaryFile fname ReadMode
                                        then 'x'
                                        else 'o'
                    return . Map.fromList $ concatMap ln lns
-
---- readPgm "test-data/sanitized-input.pgm"

@@ -8,7 +8,7 @@ import System.FilePath (replaceExtension, dropExtension)
 
 ---------- File emission
 svgShow :: Element -> String
-svgShow (Line (x, y) (x', y')) = concat ["<line x1=", ss x, " y1=", ss y, " x2=", ss x', " y2=", ss y', " stroke-width=\"2\"/>"]
+svgShow (Line (x, y) (x', y')) = concat ["<line x1=", ss x, " y1=", ss y, " x2=", ss x', " y2=", ss y', " stroke-width=\"3\"/>"]
     where ss = show . show . (*10)
 
 svgWrite :: FilePath -> [Element] -> IO ()
@@ -45,15 +45,13 @@ fbWrite fname elems = writeFile fname contents
 
 ---------- Main and related utility
 main :: IO ()
-main = mapM_ (processFile 3 6) [ "test-data/single-color.txt"
-                               , "test-data/multi-color.txt"
-                               , "test-data/pentagon.txt"
-                               , "test-data/pentagon-multiline-to-square.txt"
-                               , "test-data/circle-arrow-rect.txt"
-                               ]
-
--- System.Process.readProcess
--- 
+main = do mapM_ (processFile 3 6) [ "test-data/single-color.txt"
+                                  , "test-data/multi-color.txt"
+                                  , "test-data/pentagon.txt"
+                                  , "test-data/pentagon-multiline-to-square.txt"
+                                  , "test-data/circle-arrow-rect.txt" ]
+          processFile 10 15 "test-data/circle-arrow-rect.ppm"
+          processFile 5 10 "test-data/sanitized-input.ppm"
 
 processFile :: Integer -> Integer -> FilePath -> IO ()
 processFile alignThreshold threshold fname = do f <- readSparse fname
