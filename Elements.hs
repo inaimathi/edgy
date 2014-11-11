@@ -47,7 +47,7 @@ thinLines m
                                         b' = fromIntegral b
 
 computeElements :: Integer -> Grid a -> [Element]
-computeElements threshold m = recur . byDistance . Maybe.mapMaybe toInternal . concatMap (islands threshold) . concatMap splitByVal $ getDirections m
+computeElements threshold m = recur . byDistance . Maybe.mapMaybe toInternal . map trimFlash . concatMap (islands threshold) . concatMap splitByVal $ getDirections m
     where toInternal region = case thinLines region of
                                 Just ln -> Just (region, ln)
                                 Nothing -> Nothing                               

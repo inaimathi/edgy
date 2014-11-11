@@ -1,8 +1,9 @@
 module Util ( lengthI, sizeI
-            , putBeside, splitEvery) where
+            , putBeside, splitEvery
+            , differences) where
 
 import Data.List (intercalate)
-import Data.Map (Map, size)
+import Data.Map (Map, size, difference)
 
 lengthI :: [a] -> Integer
 lengthI = toInteger . length
@@ -25,3 +26,6 @@ splitEvery :: Int -> [a] -> [[a]]
 splitEvery n lst = recur lst
     where recur [] = []
           recur l = take n l : (recur $ drop n l)
+
+differences :: Ord a => Map a b -> [Map a b] -> Map a b
+differences = foldl (\memo m -> difference memo m)
