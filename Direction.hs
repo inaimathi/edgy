@@ -28,6 +28,7 @@ scoreCoord m (x, y) = (contigH, contigV, contigSW, contigSE)
           contigV = score [ ((repeat x), [y..])
                           , ((repeat x), [y, pred y..])]
 
+--- Try to do a cellular automaton-based thing (0 and 1 neighbors die, everyone else lives)
 trimFlash :: Grid Direction -> Grid Direction
 trimFlash m = case dir of 
                 H -> diff (w `div` 2) [(rw y) | y <- [minY .. maxY]] 

@@ -11,9 +11,12 @@ import qualified Data.Map as Map
 
 data Element = Line Coord Coord deriving (Eq, Ord, Show, Read)
 
+len (Line a b) = distance a b
+
 align :: Integer -> [Element] -> [Element]
-align threshold es = foldl (\memo pt -> alignY pt memo) xAligned pts
-    where xAligned = foldl (\memo pt -> alignX pt memo) es pts 
+align threshold elems = foldl (\memo pt -> alignY pt memo) xAligned pts
+    where es = sortBy (flip compare `on` len) elems
+          xAligned = foldl (\memo pt -> alignX pt memo) es pts 
           pts = concatMap (\(Line a b) -> [a, b]) es
           alignY (_, y) elems = map (pullY y) elems
           pullY y (Line a b) = Line (pullPtY a) (pullPtY b)
@@ -47,7 +50,7 @@ thinLines m
                                         b' = fromIntegral b
 
 computeElements :: Integer -> Grid a -> [Element]
-computeElements threshold m = recur . byDistance . Maybe.mapMaybe toInternal . map trimFlash . concatMap (islands threshold) . concatMap splitByVal $ getDirections m
+computeElements threshold m = recur . byDistance . Maybe.mapMaybe toInternal . concatMap (islands threshold) . concatMap splitByVal $ getDirections m
     where toInternal region = case thinLines region of
                                 Just ln -> Just (region, ln)
                                 Nothing -> Nothing                               

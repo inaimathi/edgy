@@ -51,7 +51,7 @@ readPpm fname = do h <- openBinaryFile fname ReadMode
                    img <- hGetContents h
                    let len = width * 3
                        lns = zip [0..] . map (zip [0..] . splitEvery 3) . splitEvery len $ map ord img
-                       ln (y, l) = map (\(x, v) -> ((x, y), ltr v)) $ filter (any (210>) . snd) l
+                       ln (y, l) = map (\(x, v) -> ((x, y), ltr v)) $ filter (any (190>) . snd) l
                        ltr [r, _, b] = if r > b
                                        then 'x'
                                        else 'o'

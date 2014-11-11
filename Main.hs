@@ -51,7 +51,7 @@ main = do mapM_ (processFile 3 6) [ "test-data/single-color.txt"
                                   , "test-data/pentagon-multiline-to-square.txt"
                                   , "test-data/circle-arrow-rect.txt" ]
           processFile 10 15 "test-data/circle-arrow-rect.ppm"
-          processFile 3 20 "test-data/sanitized-input.ppm"
+          processFile 6 20 "test-data/sanitized-input.ppm"
 
 processFile :: Integer -> Integer -> FilePath -> IO ()
 processFile alignThreshold threshold fname = do f <- readSparse fname
