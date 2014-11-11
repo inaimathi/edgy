@@ -139,9 +139,35 @@ The current output of this process can be seen in the [`test-data/` folder](http
 
 ##### Still TODO
 
+**Pipeline more**
+
+We need to break up the main process into more distinct phases to make intermediate output easier to generate. I kind of want to see `sanitized-input.ppm` processed piece-wise, but the current setup makes this difficult.
+
 **Tune up the alignment routine**
 
 We currently align items with similar `x` and `y` coords globally. This means that we need to keep the alignment threshold relatively low in order to avoid radical changes, which results in some points that should be aligned being left separate. What we probably _should_ do is align points are near each other in both axes with a higher threshold, then do the global `x` and `y` alignment at the lower threshold.
+
+**Trim Flash Properly**
+
+Some phases output pieces like 
+
+      --------------------
+    -----------------------
+     --   -    ----   -   --
+          -           -   -
+
+where we'd really just want
+
+      --------------------
+    -----------------------
+
+or maybe
+
+      --------------------
+    -----------------------
+               ----         
+
+Try a naive cellular-automaton-based approach first, though you'll very probably need to vary rules based on direction of the island. You might initially try something like "Any living cell with more than one Von Neumann neighbor survives", and see how that goes.
 
 **Deal with overlaps**
 
