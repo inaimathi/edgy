@@ -1,4 +1,4 @@
-module Elements ( Element(..), getElements, align, thinLines) where
+module Elements ( Element(..), computeElements, align) where
 
 import Util
 import Model
@@ -11,6 +11,7 @@ import qualified Data.Map as Map
 
 data Element = Line Coord Coord deriving (Eq, Ord, Show, Read)
 
+len :: Element -> Integer
 len (Line a b) = distance a b
 
 align :: Integer -> [Element] -> [Element]
@@ -34,8 +35,8 @@ align threshold elems = foldl (\memo pt -> alignY pt memo) xAligned pts
 -- resolveOverlaps es = undefined
 
 ---------- Line-based thinning and element generation
-thinLines :: Grid Direction -> Maybe Element
-thinLines m
+thinLine :: Grid Direction -> Maybe Element
+thinLine m
     | Map.null m = Nothing
     | otherwise = case dir of
                     H -> Just $ Line (minX, mid minY maxY) (maxX, mid minY maxY)
@@ -49,9 +50,9 @@ thinLines m
                                   where a' = fromIntegral a
                                         b' = fromIntegral b
 
-computeElements :: Integer -> Grid a -> [Element]
-computeElements threshold m = recur . byDistance . Maybe.mapMaybe toInternal . concatMap (islands threshold) . concatMap splitByVal $ getDirections m
-    where toInternal region = case thinLines region of
+computeElements :: Integer -> [Grid Direction] -> [Element]
+computeElements threshold m = recur . byDistance $ Maybe.mapMaybe toInternal m
+    where toInternal region = case thinLine region of
                                 Just ln -> Just (region, ln)
                                 Nothing -> Nothing                               
           byDistance = sortBy (flip compare `on` (len . snd))
@@ -60,10 +61,7 @@ computeElements threshold m = recur . byDistance . Maybe.mapMaybe toInternal . c
           recur (r:rest) = (snd r) : (recur . byDistance $ filterOut (fst r) rest)
           filterOut _ [] = []
           filterOut m (r:rest) = let filtered = Map.difference (fst r) m
-                                     thinned = thinLines filtered
+                                     thinned = thinLine filtered
                                  in case (sizeI filtered > threshold, thinned) of
                                       (True, Just ln) -> (filtered, ln) : (filterOut m rest)
                                       _ -> filterOut m rest
-
-getElements :: Ord a => Integer -> Grid a -> [Element]
-getElements threshold g = concatMap (computeElements threshold) . concatMap (islands threshold) $ splitByVal g
