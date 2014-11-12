@@ -56,43 +56,31 @@ main = do mapM_ (processFile 3 6) [ "test-data/single-color.txt"
           processFile 10 15 "test-data/circle-arrow-rect.ppm"
           processFile 0 10 "test-data/sanitized-input.ppm"
 
--- read
--- -> split-to-colors
---    each color
---    -> split-to-islands
---       each island 
---       -> direction map
---       -> split-to-regions
---       -> trim-flash
---       -> generate-elements
---    -> concatenate
--- -> concatenate
--- -> sort-by-element-size
--- -> align
--- writeSVG
-
---   also, potentially output intermediate states to files
+mmapM_ :: (a -> IO b) -> [[a]] -> IO ()
+mmapM_ = mapM_ . mapM_
 
 processFile :: Integer -> Integer -> FilePath -> IO ()
 processFile alignThreshold threshold fname = do f <- readSparse fname
                                                 putStrLn $ "\n=>" ++ fname
-                                                -- let colors = splitByVal f
-                                                --     islandGroups = map (islands threshold) colors
-                                                --     directions = map (concatMap getDirections) islandGroups
-                                                --     regions = map (concatMap (islands threshold)) directions
-                                                --     trimmed = map (map trimFlash) regions
-                                                --     elems = map (computeElements threshold) trimmed
-                                                --     aligned = align alignThreshold $ concat elems
-                                                -- fbWrite (replaceExtension fname "base") aligned
-                                                -- svgWrite (replaceExtension fname "svg") aligned
-                                                -- mapM_ (putStrLn . show) aligned
+                                                let colors = splitByVal f
+                                                    islandGroups = map (islands threshold) colors
+                                                    directions = map (concatMap getDirections) islandGroups
+                                                    regions = map (concatMap (islands threshold) . concatMap splitByVal) directions
+                                                    trimmed = map (filter ((>threshold) . sizeI)) $ map (map trimFlash) regions
+                                                    elems = map (computeElements threshold) trimmed
+                                                    aligned = align alignThreshold $ concat elems
+                                                -- putStrLn "### COLORS #######"
+                                                -- mapM_ (putStrLn . showCharGrid) colors
+                                                -- putStrLn "### DIRECTIONS ###"
+                                                -- mmapM_ (putStrLn . showGrid) directions
+                                                -- putStrLn "### REGIONS ######"
+                                                -- mapM_ (putBeside . map showGrid) regions
+                                                -- putStrLn "### TRIMMED ######"
+                                                -- mapM_ (putBeside . map showGrid) trimmed
+                                                putStrLn "### ELEMS ########"
+                                                mmapM_ (putStrLn . show) elems
+                                                putStrLn "### ALIGNED ######"
+                                                mapM_ (putStrLn . show) aligned
+                                                fbWrite (replaceExtension fname "base") aligned
+                                                svgWrite (replaceExtension fname "svg") aligned
 
-                                                
-                                                let regions = concatMap (islands threshold) . concatMap splitByVal . getDirections f
-                                                    elems = align alignThreshold $ computeElements threshold regions
---                                                putStrLn $ showCharGrid f
---                                                mapM_ (putStrLn . showCharGrid) $ splitByVal f
---                                                mapM_ putBeside $ splitEvery 3 $ map showGrid regions
-                                                fbWrite (replaceExtension fname "base") elems
-                                                svgWrite (replaceExtension fname "svg") elems
-                                                mapM_ (putStrLn . show) elems
