@@ -8,6 +8,7 @@ import Elements
 import SparseRead
 
 import System.FilePath (replaceExtension, dropExtension)
+import Data.List (intercalate)
 
 ---------- File emission
 svgShow :: Element -> String
@@ -56,9 +57,6 @@ main = do mapM_ (processFile 3 6) [ "test-data/single-color.txt"
           processFile 10 15 "test-data/circle-arrow-rect.ppm"
           processFile 0 10 "test-data/sanitized-input.ppm"
 
-mmapM_ :: (a -> IO b) -> [[a]] -> IO ()
-mmapM_ = mapM_ . mapM_
-
 processFile :: Integer -> Integer -> FilePath -> IO ()
 processFile alignThreshold threshold fname = do f <- readSparse fname
                                                 putStrLn $ "\n=>" ++ fname
@@ -67,20 +65,21 @@ processFile alignThreshold threshold fname = do f <- readSparse fname
                                                     directions = map (concatMap getDirections) islandGroups
                                                     regions = map (concatMap (islands threshold) . concatMap splitByVal) directions
                                                     trimmed = map (filter ((>threshold) . sizeI)) $ map (map trimFlash) regions
-                                                    elems = map (computeElements threshold) trimmed
-                                                    aligned = align alignThreshold $ concat elems
-                                                -- putStrLn "### COLORS #######"
-                                                -- mapM_ (putStrLn . showCharGrid) colors
+                                                    elems = concat $ map (computeElements threshold) trimmed
+                                                    aligned = align alignThreshold elems
+--                                                putStrLn "### COLORS #######"
+                                                writeFile (withExt "colors") $ concatMap showCharGrid colors
                                                 -- putStrLn "### DIRECTIONS ###"
-                                                -- mmapM_ (putStrLn . showGrid) directions
+                                                writeFile (withExt "directions") . unlines $ map (concatMap showGrid) directions
                                                 -- putStrLn "### REGIONS ######"
-                                                -- mapM_ (putBeside . map showGrid) regions
+                                                writeFile (withExt "regions") . unlines $ map (concatMap showGrid) regions
                                                 -- putStrLn "### TRIMMED ######"
-                                                -- mapM_ (putBeside . map showGrid) trimmed
-                                                putStrLn "### ELEMS ########"
-                                                mmapM_ (putStrLn . show) elems
-                                                putStrLn "### ALIGNED ######"
-                                                mapM_ (putStrLn . show) aligned
-                                                fbWrite (replaceExtension fname "base") aligned
-                                                svgWrite (replaceExtension fname "svg") aligned
+                                                writeFile (withExt "trimmed") . unlines $ map (concatMap showGrid) trimmed
+                                                -- putStrLn "### ELEMS ########"
+                                                writeFile (withExt "elems") . unlines $ map show elems
+                                                -- putStrLn "### ALIGNED ######"
+                                                writeFile (withExt "aligned") . unlines $ map show aligned
+--                                                fbWrite (withExt "base") aligned
+                                                svgWrite (withExt "svg") aligned
+    where withExt = replaceExtension fname
 
