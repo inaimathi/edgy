@@ -1,6 +1,6 @@
 module Model ( Coord, minC, maxC, distance, findContiguous, dropLeadingEmpties, allNeighbors, member
              , BoundingBox(..), boxOf
-             , Grid, showGrid, islands, splitByVal) where
+             , Grid, showGrid, showCharGrid, islands, splitByVal) where
 
 import Util
 
@@ -52,6 +52,13 @@ boxOf m = if Map.null m
 
 ----- Grids
 type Grid a = Map Coord a
+
+showCharGrid :: Grid Char -> String
+showCharGrid m = unlines [ln y | y <- [minY..maxY]]
+    where ln y = concat [ case Map.lookup (x, y) m of
+                            Nothing -> " "
+                            Just a -> [a] | x <- [minX..maxX]]
+          (Box (minX, minY) (maxX, maxY)) = boxOf m
 
 showGrid :: Show a => Grid a -> String
 showGrid m = unlines [ln y | y <- [minY..maxY]]
