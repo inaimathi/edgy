@@ -135,13 +135,13 @@ This is the principal approach I've settled on for generating line vectors from 
 
 Using this information, we can separate contiguous regions into islands, and assemble the dominating ones (by size) into a series of lines that represent the same image. That's done in the [`Elements.hs` file](https://github.com/Inaimathi/EAF/blob/master/Elements.hs), and the result of this operation is a series of `Element`s (just `Line`s at the moment, but `Ellipse` and/or `Curve`, and probably `Text` are coming in the future). Once we've generated elements, we align their points within a certain tolerance; things that _almost_ line up are made to line up precisely, on the assumption that our input is coming from humans.
 
-The current output of this process can be seen in the [`test-data/` folder](https://github.com/Inaimathi/EAF/tree/master/test-data). Each `.txt` file is an input, and the corresponding output is in the similarly named `.svg` file. The current output for the above example input can be found [here](https://github.com/Inaimathi/EAF/blob/master/test-data/single-color.svg).
+The current output of this process can be seen in the [`test-data/` folder](https://github.com/Inaimathi/EAF/tree/master/test-data). Each `.txt`/`.ppm`/`.pgm` file is an input, and the corresponding output is in the similarly named `.svg` file. The current output for the above example input can be found [here](https://github.com/Inaimathi/EAF/blob/master/test-data/single-color.svg).
 
 ##### Still TODO
 
-**Pipeline more**
+**Re-think the sorting criteria**
 
-We need to break up the main process into more distinct phases to make intermediate output easier to generate. I kind of want to see `sanitized-input.ppm` processed piece-wise, but the current setup makes this difficult.
+Right now, it's the length of the hypothetical line made from the region. That's probably good enough for ordinal regions, but we might actually want to grade cardinal regions by longest contiguous line rather than the naive bounding box (this would prevent the vertical line artifacts in diamonds and triangles observed in sanitized-input.* testing). We shouldn' *thin* cardinal regions this way, merely use it for ranking purposes, otherwise we get a really strict straightness requirement that basically means we need a ruler and stable surface out when drawing this stuff (at that stage, what's the point?)
 
 **Tune up the alignment routine**
 
@@ -167,7 +167,7 @@ or maybe
     -----------------------
                ----         
 
-Try a naive cellular-automaton-based approach first, though you'll very probably need to vary rules based on direction of the island. You might initially try something like "Any living cell with more than one Von Neumann neighbor survives", and see how that goes.
+Try a naive cellular-automaton-based approach first, though you'll very probably need to vary rules based on direction of the island. You might initially try something like "Any living cell with more than one Von Neumann neighbor survives", or "Any living cell with more than three Moore neighbors survives, and any cell with 7 or more neighbors becomes alive" and see how that goes.
 
 **Deal with overlaps**
 
@@ -193,11 +193,9 @@ At the moment, crunching a ~1mb file takes a few seconds. Ideally, it would be f
 
 ### General Notes
 
-- The current examples and experimentation are mainly based on `ascii` representations of our target images. I'm assuming that once I figure out the principles, porting them over to a pixel context won't prove too difficult.
-- The current examples all have a much higher `line-width` : `image-size` ratio than actual inputs will. This _complicates_ generation slightly, and makes it pretty hard to disambiguate circles from polygons. I expect that to become easier as we lower the ratio.
-- These are not experiments for generic object identification. The idea here is to take dead bitmaps and generate flow diagrams for [visual programs](http://langnostic.inaimathi.ca/article?name=the-big-problem-and-visual-compilers.html) from them. This means we're dealing with a very restricted set of images:
+- These are not experiments aimed at generic object identification. The idea here is to take dead bitmaps and generate flow diagrams for [visual programs](http://langnostic.inaimathi.ca/article?name=the-big-problem-and-visual-compilers.html) from them. This means we're dealing with a very restricted set of images:
 	- All white background
 	- Some sparse text
 	- Only line drawings
 - The idea is to get something practically workable, and not necessarily start out with the general case solution. In particular, I'm perfectly willing to "cheat" by adding the restriction that lines/arrows and shapes be represented in different colors. So as far as I'm concerned, another perfectly legitimate example is something like [this](https://github.com/Inaimathi/EAF/blob/master/test-data/multi-color.txt). At the current level of experimentation, it doesn't seem to make as big a difference as I thought it might (as you can see by comparing [this](https://github.com/Inaimathi/EAF/blob/master/test-data/single-color.txt)->[this](https://github.com/Inaimathi/EAF/blob/master/test-data/single-color.svg) to [this](https://github.com/Inaimathi/EAF/blob/master/test-data/multi-color.txt)->[this](https://github.com/Inaimathi/EAF/blob/master/test-data/multi-color.svg).) There's really no reason _not_ to support it, since the exact same machinery can handle single and multi-color inputs, but I don't think I'll be putting emphasis on color coded images for the moment.
-- It might seem that thinning Cardinal lines by finding the longest contiguous line would be a pretty good idea, because it would reduce flash. Unfortunately, it also tends to truncate long, _almost_ straight lines drawn by hand. It seems that Cardinal lines should be thinned exactly like Ordinal lines; by doing a mild transformation on their bounding box.
+- It might seem that thinning Cardinal lines by finding the longest contiguous line would be a pretty good idea, because it would reduce flash. Unfortunately, it also tends to truncate long, _almost_ straight lines drawn by hand. It seems that Cardinal lines should be thinned exactly like Ordinal lines; by doing a mild transformation on their bounding box. This is probably not true for the sorting algorithm though; while condensing, we probably do want to treat cardinal lines as the bounding box of their longest contained, contiguous line.
