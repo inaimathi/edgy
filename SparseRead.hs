@@ -1,4 +1,4 @@
-module SparseRead ( readSparse, sparsify ) where
+module SparseRead ( readSparse, readPgm, readPpm) where
 
 import Util
 import Model
@@ -19,8 +19,8 @@ sparsify predicate str = foldl addLine Map.empty $ zip [0..] ls
 readSparse :: FilePath -> IO (Grid Char)
 readSparse fname = case takeExtension fname of
                      ".txt" -> fmap (sparsify (/='.')) $ readFile fname
-                     ".pgm" -> readPgm fname
-                     ".ppm" -> readPpm fname
+                     ".pgm" -> fmap (Map.map (const 'x')) $ readPgm fname
+                     ".ppm" -> fmap (Map.map (\(r, _, b) -> if r > b then 'x' else 'o')) $ readPpm fname
                      _ -> return Map.empty
 
 getNonComment :: Handle -> IO String
@@ -36,23 +36,22 @@ getHeaders h = do ln1 <- getNonComment h
                   let [w, h] = map read $ words ln2
                   return $ (ln1, (w, h), read ln3)
 
-readPgm :: FilePath -> IO (Grid Char)
+readPgm :: FilePath -> IO (Grid Int)
 readPgm fname = do h <- openBinaryFile fname ReadMode
                    (_, (width, _), _) <- getHeaders h
                    img <- hGetContents h
                    let len = width
                        lns = zip [0..] . map (zip [0..]) . splitEvery len $ map ord img
-                       ln (y, l) = map (\(x, _) -> ((x, y), 'x')) $ filter ((190>) . snd) l
+                       ln (y, l) = map (\(x, v) -> ((x, y), v)) $ filter ((190>) . snd) l
                    return . Map.fromList $ concatMap ln lns
 
-readPpm :: FilePath -> IO (Grid Char)
+readPpm :: FilePath -> IO (Grid (Int, Int, Int))
 readPpm fname = do h <- openBinaryFile fname ReadMode
                    (_, (width, _), _) <- getHeaders h
                    img <- hGetContents h
                    let len = width * 3
                        lns = zip [0..] . map (zip [0..] . splitEvery 3) . splitEvery len $ map ord img
-                       ln (y, l) = map (\(x, v) -> ((x, y), ltr v)) $ filter (any (190>) . snd) l
-                       ltr [r, _, b] = if r > b
-                                       then 'x'
-                                       else 'o'
+                       ln (y, l) = map (\(x, v) -> ((x, y), tup v)) $ filter (any (190>) . snd) l
+                       tup [r, g, b] = (r, g, b)
+                       tup _ = (0, 0, 0)
                    return . Map.fromList $ concatMap ln lns
