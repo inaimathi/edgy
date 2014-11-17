@@ -44,7 +44,7 @@ thinLine m
                     SE -> Just $ Line (minX, minY) (maxX, maxY)
                     SW -> Just $ Line (maxX, minY) (minX, maxY)
                     C -> Nothing
-                  where dir = snd . head $ Map.toList m
+                  where dir = snd . head $ toList m
                         Box (minX, minY) (maxX, maxY) = boxOf m
                         mid a b = toInteger . round $ a' + ((b' - a') / 2)
                                   where a' = fromIntegral a

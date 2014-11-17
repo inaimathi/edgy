@@ -1,7 +1,8 @@
-module Model ( Coord, minC, maxC, distance, findContiguous, dropLeadingEmpties, allNeighbors, member
+module Model ( Coord, minC, maxC, distance, findContiguous, dropLeadingEmpties, member
+             , allNeighbors, allNeighborsBy, vonNeumann, moore
              , BoundingBox(..), boxOf
-             , Grid, showGrid, showCharGrid, islands, splitByVal) where
-
+             , Grid, showGrid, showCharGrid, islands, splitByVal, Map.fromList, Map.toList) where
+    
 import Util
 
 import Data.Maybe (fromJust)
@@ -34,11 +35,17 @@ dropLeadingEmpties m cs = dropWhile ((==Nothing) . flip Map.lookup m) cs
 member :: Grid a -> Coord -> Bool
 member g c = Map.member c g
 
-vonNeumannNeighbors :: Coord -> [Coord]
-vonNeumannNeighbors (x, y) = [(x+x', y+y') | x' <- [-1..1], y' <- [-1..1], abs x' /= abs y']
+moore :: Coord -> [Coord]
+moore (x, y) = [(x+x', y+y') | x' <- [-1..1], y' <- [-1..1], (0,0) /= (x', y')]
+
+vonNeumann :: Coord -> [Coord]
+vonNeumann (x, y) = [(x+x', y+y') | x' <- [-1..1], y' <- [-1..1], abs x' /= abs y']
+
+allNeighborsBy :: (Coord -> [Coord]) -> [Coord] -> [Coord]
+allNeighborsBy fn = nub . concatMap fn
 
 allNeighbors :: [Coord] -> [Coord]
-allNeighbors = nub . concatMap vonNeumannNeighbors
+allNeighbors = allNeighborsBy vonNeumann
 
 
 ----- Bounding Boxes
