@@ -5,17 +5,13 @@ import Model
 import Elements
 
 import Data.Maybe
+import Data.Set (Set)
+import qualified Data.Set as Set
 import qualified Data.Map as Map
-
-notdef = -1024.0
-ang_th = 22.5
-prec = ang_th/180.0
-precision = pi * prec
-threshold = 2.0 / sin precision
 
 computeGradient :: Grid Int -> Grid Float
 computeGradient m = Map.mapWithKey angle m
-    where angle k v = let [ a, b, c, d ] = region k
+    where angle k _ = let [ a, b, c, d ] = region k
                           gx = fromIntegral $ (b+d) - (a+c)
                           gy = fromIntegral $ (c+d) - (a+b)
                           norm = sqrt $ (gx*gx + gy*gy) / 4.0
@@ -25,27 +21,76 @@ computeGradient m = Map.mapWithKey angle m
           region (x, y) = map (\c -> Map.findWithDefault 255 c m)
                           [(x+x', y+y') | x' <- [0,1], y' <- [0,1]]
 
-regionGrow :: Grid Float -> Grid Float
-regionGrow m = recur m [unsafeFirst m] empty
-    where val c = fromJust $ Map.lookup c m
-          inThresh c v = and [(threshold + val c) >= v, v >= (threshold - val c)]
-          qualifies grid c = filter (\cand -> and [Map.member cand grid, Map.member c grid, inThresh c $ val cand]) $ vonNeumann c
-          recur _ [] acc = acc
-          recur m layer acc = let nextGrid = foldl (flip Map.delete) m layer
-                                  nextLayer = concatMap (qualifies nextGrid) $ allNeighbors layer
-                              in recur nextGrid nextLayer $ foldl (\memo c -> Map.insert c (val c) memo) acc layer
+regionGrow :: Coord -> Float -> Grid Float -> Set Coord
 
-findRegions :: Grid Float -> [Grid Float]
-findRegions grid 
-    | 0 == size grid = []
-    | otherwise      = r : (findRegions $ Map.difference grid r)
-                       where r = regionGrow grid
+-- regionGrow px v grad = recur Set.empty $ Set.fromList [px]
+--     where neighborsOf pxs = Set.filter qualified . Set.unions . Set.toList $ Set.map (Set.fromList . moore) pxs
+--           qualified candidate = and [ Map.member candidate grad
+--                                     , withinThreshold . fromJust $ Map.lookup candidate grad ]
+--           withinThreshold c = (abs $ abs v - abs c) >= threshold
+--           recur r layer
+--               | Set.null layer = r
+--               | otherwise = recur (Set.union r layer) $ neighborsOf layer 
+
+regionGrow px v grad = recur [px] grad Set.empty
+    where neighborsOf m pxs = filter (relevant m) pxs
+          relevant m px = case Map.lookup px m of
+                            Nothing -> False
+                            Just cV  -> (abs $ abs v - abs cV) >= threshold
+          recur [] _ acc    = acc
+          recur layer m acc = let nextM = foldl (flip Map.delete) m layer
+                                  nextLayer = neighborsOf nextM $ allNeighbors layer
+                              in recur nextLayer nextM $ foldl (\memo c -> Set.insert c memo) acc layer
+
+fitRectangle :: Set Coord -> Element -- THIS IS SILLY. STOP BEING SO SILLY.
+fitRectangle cs = Line a b
+    where Box a b = boxOf . fromCoords $ Set.toList cs
 
 elsd :: Grid Int -> [Element]
-elsd image = Map.foldlWithKey regionOf [] grad
+elsd image = filter (\(Line a b) -> a /= b) $ Set.toList $ Map.foldlWithKey regionOf Set.empty grad
     where grad = computeGradient image
-          regionOf memo k v = r:memo
-              where r = undefined
+          regionOf memo k v = Set.insert line memo
+              where r = regionGrow k v grad
+                    line = fitRectangle r
 
-main = do f <- readPgm "test-data/sanitized-input.pgm"
-          putStrLn . show . filter ((>5) . size) . findRegions $ computeGradient f
+main:: IO ()
+main = do f <- readPgm "test-data/sanitized-medal.pgm"
+          svgWrite "test-data/sanitized-medal.svg" (elsd f)
+          putStrLn . show . length $ elsd f
+          putStrLn "Done..."
+
+---------- File emission
+svgShow :: Element -> String
+svgShow (Line (x, y) (x', y')) = concat ["<line x1=", ss x, " y1=", ss y, " x2=", ss x', " y2=", ss y', " stroke-width=\"3\"/>"]
+    where ss = show . show . (*10)
+
+svgWrite :: FilePath -> [Element] -> IO ()
+svgWrite _ [] = do return ()
+svgWrite fname elems = writeFile fname contents
+    where contents = concat [ "<svg width=\"11in\" height=\"8.5in\" "
+                            , "viewBox=\"", s $ x-10, " ", s $ y-10, " ", s $ x'+10, " ", s $ y'+10, "\" "
+                            , "xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\">"
+                            , "<g stroke=\"green\">"
+                            , concatMap svgShow elems
+                            , "</g></svg>" 
+                            ]
+          ((x, y), (x', y')) = foldl (\(a', b') (Line a b) -> (minC b (minC a a'), maxC a (maxC b b'))) first elems
+          first = let (Line a b) = head elems
+                  in (a, b)
+          s = show . (*10)
+
+---------- Constants
+notdef :: Float
+notdef = -1024.0
+
+ang_th :: Float
+ang_th = 22.5
+
+prec :: Float
+prec = ang_th/180.0
+
+precision :: Float
+precision = pi * prec
+
+threshold :: Float
+threshold = 2.0 / sin precision
