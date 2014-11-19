@@ -1,4 +1,4 @@
-module SparseRead ( readSparse, readPgm, readPpm) where
+module SparseRead (readSparse, readPgm, readPpm) where
 
 import Util
 import Model
@@ -9,7 +9,7 @@ import System.IO
 import System.FilePath (takeExtension)
 
 sparsify :: (Char -> Bool) -> String -> Grid Char
-sparsify predicate str = foldl addLine Map.empty $ zip [0..] ls
+sparsify predicate str = foldl addLine empty $ zip [0..] ls
     where ls = lines str
           addLine memo (ix, line) = foldl (addCell ix) memo $ zip [0..] line
           addCell y memo (x, char)
@@ -21,7 +21,7 @@ readSparse fname = case takeExtension fname of
                      ".txt" -> fmap (sparsify (/='.')) $ readFile fname
                      ".pgm" -> fmap (Map.map (const 'x')) $ readPgm fname
                      ".ppm" -> fmap (Map.map (\(r, _, b) -> if r > b then 'x' else 'o')) $ readPpm fname
-                     _ -> return Map.empty
+                     _ -> return empty
 
 getNonComment :: Handle -> IO String
 getNonComment h = do ln <- hGetLine h

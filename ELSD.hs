@@ -4,6 +4,8 @@ import SparseRead
 import Model
 import Elements
 
+import Data.List (sortBy)
+import Data.Function (on)
 import Data.Maybe
 import Data.Set (Set)
 import qualified Data.Set as Set
@@ -22,16 +24,6 @@ computeGradient m = Map.mapWithKey angle m
                           [(x+x', y+y') | x' <- [0,1], y' <- [0,1]]
 
 regionGrow :: Coord -> Float -> Grid Float -> Set Coord
-
--- regionGrow px v grad = recur Set.empty $ Set.fromList [px]
---     where neighborsOf pxs = Set.filter qualified . Set.unions . Set.toList $ Set.map (Set.fromList . moore) pxs
---           qualified candidate = and [ Map.member candidate grad
---                                     , withinThreshold . fromJust $ Map.lookup candidate grad ]
---           withinThreshold c = (abs $ abs v - abs c) >= threshold
---           recur r layer
---               | Set.null layer = r
---               | otherwise = recur (Set.union r layer) $ neighborsOf layer 
-
 regionGrow px v grad = recur [px] grad Set.empty
     where neighborsOf m pxs = filter (relevant m) pxs
           relevant m px = case Map.lookup px m of
@@ -46,20 +38,27 @@ fitRectangle :: Set Coord -> Element -- THIS IS SILLY. STOP BEING SO SILLY.
 fitRectangle cs = Line a b
     where Box a b = boxOf . fromCoords $ Set.toList cs
 
-elsd :: Grid Int -> [Element]
-elsd image = filter (\(Line a b) -> a /= b) $ Set.toList $ Map.foldlWithKey regionOf Set.empty grad
+elsd :: Grid Int -> [(Element, Set Coord)]
+elsd image = filter (\((Line a b), _) -> a /= b) $ Set.toList $ Map.foldlWithKey regionOf Set.empty grad
     where grad = computeGradient image
-          regionOf memo k v = Set.insert line memo
+          regionOf memo k v = Set.insert elem memo
               where r = regionGrow k v grad
-                    line = fitRectangle r
+                    elem = (fitRectangle r, r)
 
 main:: IO ()
 main = do f <- readPgm "test-data/sanitized-medal.pgm"
-          svgWrite "test-data/sanitized-medal.svg" (elsd f)
-          putStrLn . show . length $ elsd f
+          let res = elsd f
+              biggies = map snd . take 2 $ sortBy (flip compare `on` len . fst) res
+          svgWrite "test-data/sanitized-medal.svg" $ map fst res
+          putStrLn . show $ length res
+          mapM_ (putStrLn . showGrid . setToGrid) biggies
           putStrLn "Done..."
 
 ---------- File emission
+setToGrid :: Set Coord -> Grid Char
+setToGrid s = fromList . map (\c -> (c, 'x')) $ Set.toList s
+
+
 svgShow :: Element -> String
 svgShow (Line (x, y) (x', y')) = concat ["<line x1=", ss x, " y1=", ss y, " x2=", ss x', " y2=", ss y', " stroke-width=\"3\"/>"]
     where ss = show . show . (*10)

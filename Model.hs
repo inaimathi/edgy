@@ -1,14 +1,16 @@
 module Model ( Coord, minC, maxC, distance, findContiguous, dropLeadingEmpties, member
              , allNeighbors, allNeighborsBy, vonNeumann, moore
              , BoundingBox(..), boxOf
-             , Grid, showGrid, showCharGrid, islands, splitByVal, Map.fromList, Map.toList) where
+             , Grid
+               , showGrid, showCharGrid
+               , islands, splitByVal, first, unsafeFirst
+               , fromCoords, Map.fromList, Map.toList, Map.size, Map.empty) where
     
-import Util
-
 import Data.Maybe (fromJust)
 import Data.List (nub)
 import Data.Map (Map)
 import qualified Data.Map as Map
+
 ----- Coords
 type Coord = (Integer, Integer)
 
@@ -60,6 +62,17 @@ boxOf m = if Map.null m
 ----- Grids
 type Grid a = Map Coord a
 
+fromCoords :: [Coord] -> Grid Bool
+fromCoords = Map.fromList . map (\c -> (c, True))
+
+unsafeFirst :: Grid a -> Coord
+unsafeFirst grid = fst . head $ Map.toList grid
+
+first :: Grid a -> Maybe Coord
+first grid 
+    | Map.size grid == 0 = Nothing
+    | otherwise          = Just $ unsafeFirst grid
+
 showCharGrid :: Grid Char -> String
 showCharGrid m = unlines [ln y | y <- [minY..maxY]]
     where ln y = concat [ case Map.lookup (x, y) m of
@@ -75,18 +88,14 @@ showGrid m = unlines [ln y | y <- [minY..maxY]]
           (Box (minX, minY) (maxX, maxY)) = boxOf m
 
 islands :: Integer -> Grid a -> [Grid a]
-islands threshold grid = recur grid []
-    where recur m acc
-              | Map.size m == 0 = acc
-              | otherwise = let r = nextRegion m
-                            in recur (Map.difference m r)
-                                   $ if sizeI r >= threshold
-                                     then r:acc else acc
+islands threshold grid 
+    | Map.size grid == 0 = []
+    | otherwise       = r : (islands threshold $ Map.difference grid r)
+                        where r = nextRegion grid
 
 nextRegion :: Grid a -> Grid a
-nextRegion m = recur start m Map.empty
-    where start = map fst . take 1 $ Map.toList m
-          members grid cs = filter (flip Map.member grid) cs
+nextRegion m = recur [unsafeFirst m] m Map.empty
+    where members grid cs = filter (flip Map.member grid) cs
           val c = fromJust $ Map.lookup c m
           recur [] _ acc = acc
           recur layer grid acc = let nextGrid = foldl (flip Map.delete) grid layer

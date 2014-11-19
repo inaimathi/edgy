@@ -1,4 +1,4 @@
-module Elements ( Element(..), computeElements, align) where
+module Elements ( Element(..), computeElements, align, len) where
 
 import Util
 import Model
