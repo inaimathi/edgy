@@ -1,10 +1,10 @@
-module Model ( Coord, minC, maxC, distance, findContiguous, dropLeadingEmpties, member
+module Model ( Coord, minC, maxC, distance, findContiguous, dropLeadingEmpties
              , allNeighbors, allNeighborsBy, vonNeumann, moore
              , BoundingBox(..), boxOf
              , Grid
                , showGrid, showCharGrid
                , islands, splitByVal, first, unsafeFirst
-               , fromCoords, Map.fromList, Map.toList, Map.size, Map.empty) where
+               , fromCoords, Map.fromList, Map.toList, Map.size, Map.empty, Map.member) where
     
 import Data.Maybe (fromJust)
 import Data.List (nub)
@@ -33,9 +33,6 @@ findContiguous m cs = recur cs []
 
 dropLeadingEmpties :: Eq a => Grid a -> [Coord] -> [Coord]
 dropLeadingEmpties m cs = dropWhile ((==Nothing) . flip Map.lookup m) cs
-
-member :: Grid a -> Coord -> Bool
-member g c = Map.member c g
 
 moore :: Coord -> [Coord]
 moore (x, y) = [(x+x', y+y') | x' <- [-1..1], y' <- [-1..1], (0,0) /= (x', y')]
@@ -87,10 +84,10 @@ showGrid m = unlines [ln y | y <- [minY..maxY]]
                             Just a -> show a | x <- [minX..maxX]]
           (Box (minX, minY) (maxX, maxY)) = boxOf m
 
-islands :: Integer -> Grid a -> [Grid a]
-islands threshold grid 
+islands :: Grid a -> [Grid a]
+islands grid 
     | Map.size grid == 0 = []
-    | otherwise       = r : (islands threshold $ Map.difference grid r)
+    | otherwise          = r : (islands $ Map.difference grid r)
                         where r = nextRegion grid
 
 nextRegion :: Grid a -> Grid a
