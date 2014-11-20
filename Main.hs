@@ -59,32 +59,30 @@ test = do mapM_ (processFile 3 6) [ "test-data/single-color.txt"
           processFile 0 10 "test-data/sanitized-input.ppm"
 
 processFile :: Integer -> Integer -> FilePath -> IO ()
-processFile alignThreshold threshold fname = do f <- readSparse fname
-                                                putStrLn $ "\n=>" ++ fname
-                                                let colors = splitByVal f
-                                                    islandGroups = concatMap (islands threshold) colors
-                                                    directions = map getDirections islandGroups
-                                                    regions = map (sortBy (flip compare `on` sizeI) . concatMap (islands threshold) . concatMap splitByVal) directions
-                                                    trimmed = map (filter ((>threshold) . sizeI) . map trimFlash) regions
-                                                    elems = concatMap (computeElements threshold) regions
-                                                    aligned = align alignThreshold elems
---                                                putStrLn "### COLORS #######"
-                                                writeFile (withExt "colors") $ concatMap showCharGrid colors
-                                                -- putStrLn "### DIRECTIONS ###"
-                                                writeFile (withExt "directions") . unlines $ map (concatMap showGrid) directions
---                                                mapM_ (putBeside . map showGrid) $ directions
-                                                -- putStrLn "### REGIONS ######"
-                                                writeFile (withExt "regions") . unlines $ map (concatMap showGrid) regions
---                                                mapM_ (putBeside . map showGrid) $ regions
-                                                -- putStrLn "### TRIMMED ######"
-                                                writeFile (withExt "trimmed") . unlines $ map (concatMap showGrid) trimmed
-                                                -- putStrLn "### ELEMS ########"
-                                                writeFile (withExt "elems") . unlines $ map show elems
-                                                -- putStrLn "### ALIGNED ######"
-                                                writeFile (withExt "aligned") . unlines $ map show aligned
---                                                fbWrite (withExt "base") aligned
-                                                svgWrite (withExt "svg") aligned
-    where withExt = replaceExtension fname
+processFile alignThreshold threshold fname = 
+    do f <- readSparse fname
+       putStrLn $ "\n=>" ++ fname
+       let colors = splitByVal f
+           islandGroups = concatMap (islands threshold) colors
+           directions = map getDirections islandGroups
+           regions = map (sortBy (flip compare `on` sizeI) . concatMap (islands threshold) . concatMap splitByVal) directions
+           elems = concatMap (computeElements threshold) regions
+           aligned = align alignThreshold elems
+       putStrLn "### COLORS #######"
+       writeFile (withExt "colors") $ concatMap showCharGrid colors
+       putStrLn "### DIRECTIONS ###"
+       writeFile (withExt "directions") . unlines $ map (concatMap showGrid) directions
+--       mapM_ (putBeside . map showGrid) $ directions
+       putStrLn "### REGIONS ######"
+       writeFile (withExt "regions") . unlines $ map (concatMap showGrid) regions
+       mapM_ (putBeside . map showGrid) $ regions
+       putStrLn "### ELEMS ########"
+       writeFile (withExt "elems") . unlines $ map show elems
+       putStrLn "### ALIGNED ######"
+       writeFile (withExt "aligned") . unlines $ map show aligned
+       fbWrite (withExt "base") aligned
+       svgWrite (withExt "svg") aligned
+           where withExt = replaceExtension fname
 
 main :: IO ()
 main = do args <- getArgs
