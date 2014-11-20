@@ -1,15 +1,19 @@
-module Direction ( Direction(..), getDirections, trimFlash) where
+module Direction ( Direction(..), getDirections, getDecision) where
 
 import Util
 import Model
 
-import Data.List (sort, group)
+import Data.List (maximumBy)
+import Data.Function (on)
 import qualified Data.Map as Map
 
 ----- Scoring-related stuff
 getDirections :: Grid a -> [Grid Direction]
 getDirections g = [Map.map cardinal scored, Map.map ordinal scored]
     where scored = scoreGrid g
+
+getDecision :: Grid a -> Grid Direction
+getDecision g = Map.map direction $ scoreGrid g
 
 scoreGrid :: Grid a -> Grid Score
 scoreGrid m = Map.mapWithKey (\k _ -> scoreCoord m k) m
@@ -27,40 +31,17 @@ scoreCoord m (x, y) = (contigH, contigV, contigSW, contigSE)
           contigV = score [ ((repeat x), [y..])
                           , ((repeat x), [y, pred y..])]
 
---- Try to do a cellular automaton-based thing (0 and 1 neighbors die, everyone else lives)
-
-trimFlash :: Grid a -> Grid a
-trimFlash g = g
-    where census = group . sort . allNeighborsBy moore . map fst $ toList g
-
--- fillHoles :: Grid Direction -> Grid Direction
--- fillHoles g = g
---     where census = group . sort . allNeighborsBy moore . map fst $ toList g
-
--- trimFlash :: Grid Direction -> Grid Direction
--- trimFlash m = case dir of 
---                 H -> diff (w `div` 2) [(rw y) | y <- [minY .. maxY]] 
---                 V -> diff (h `div` 2) [(cl x) | x <- [minX .. maxX]]
---                 _ -> m
---     where diff min lns = differences m . shortest min $ map Map.fromList lns
---           shortest n lns = filter ((n>) . sizeI) lns
---           dir = snd . head $ toList m
---           w = maxX - minX
---           h = maxY - minY
---           Box (minX, minY) (maxX, maxY) = boxOf m
---           rw y = looks $ zip [minX..maxX] $ repeat y
---           cl x = looks $ zip (repeat x) [minY..maxY]
---           -- Just friggin make these part of Grid
---           looks [] = []
---           looks (c:rest) = case Map.lookup c m of
---                              Just v  -> (c, v) : (looks rest)
---                              Nothing -> looks rest
-
 ----- Score
 type Score = (Integer, Integer, Integer, Integer)
 
 ----- Directions
 data Direction = H | V | SW | SE | C deriving (Eq, Ord)
+
+-- really, this should check if they're all similar enough to each other first, and declare the score C instead
+direction :: Score -> Direction
+-- This did something interesting for segmentation. Take a look at using it maybe?
+-- direction (n, e, sw, se) = fst . maximumBy (compare `on` snd) $ [(V, n), (H, e), (SW, sw), (SE, se)]
+direction (n, e, sw, se) = fst . maximumBy (compare `on` snd) $ [(V, e-n), (H, n-e), (SW, se-sw), (SE, sw-se)]
 
 ordinal :: Score -> Direction
 ordinal (_, _, sw, se) = 
