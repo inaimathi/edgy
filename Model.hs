@@ -1,13 +1,13 @@
-module Model ( Coord, minC, maxC, distance, findContiguous, dropLeadingEmpties
+module Model ( Coord, minC, maxC, distance, midpoint, findContiguous, dropLeadingEmpties
              , allNeighbors, allNeighborsBy, vonNeumann, moore
              , BoundingBox(..), boxOf
              , Grid
                , showGrid, showCharGrid
-               , islands, splitByVal, first, unsafeFirst
-               , fromCoords, Map.fromList, Map.toList, Map.size, Map.empty, Map.member) where
+               , islands, splitByVal, first, unsafeFirst, trim
+               , fromCoords, Map.insert, Map.fromList, Map.toList, Map.size, Map.empty, Map.member) where
     
 import Data.Maybe (fromJust)
-import Data.List (nub)
+import Data.List (nub, group, sort)
 import Data.Map (Map)
 import qualified Data.Map as Map
 
@@ -23,6 +23,9 @@ maxC (x, y) (x', y') = (max x x', max y y')
 distance :: Coord -> Coord -> Integer
 distance (x, y) (x', y') = toInteger $ round . sqrt $ ((maxX - minX) ** 2) + ((maxY - minY) ** 2)
     where [minX, maxX, minY, maxY] = map fromIntegral [min x x', max x x', min y y', max y y']
+
+midpoint :: Coord -> Coord -> Coord
+midpoint (x, y) (x', y') = ((x+x') `div` 2, (y+y') `div` 2)
 
 findContiguous :: Grid a -> [Coord] -> [Coord]
 findContiguous m cs = recur cs []
@@ -105,3 +108,14 @@ splitByVal m = map (\(k, v) -> Map.fromList $ zip v $ repeat k) $ splits
           split k v memo = Map.alter (ins k) v memo
           ins new (Just v) =  Just $ new:v
           ins new Nothing = Just [new]
+
+trim :: Grid a -> Grid a
+trim g = Map.fromList . next . map fst $ Map.toList g
+    where next lst = map (\c -> (c, val c)) . map head . filter survive $ census lst
+          census lst = group . sort $ concatMap moore lst 
+          survive []     = False
+          survive [_]    = False
+          survive [_, _] = False
+          survive (c:_)  = Map.member c g
+          val c = fromJust $ Map.lookup c g
+          

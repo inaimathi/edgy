@@ -63,13 +63,15 @@ processFile alignThreshold threshold fname =
     do f <- readSparse fname
        putStrLn $ "\n=>" ++ fname
        let colors = splitByVal f
-           islandGroups = concatMap islands colors
+           islandGroups = filter ((>threshold) . sizeI) . map trim $ concatMap islands colors
            directions = map getDecision islandGroups
            regions = map (sortBy (flip compare `on` sizeI) . filter ((>threshold) . sizeI) . concatMap islands . splitByVal) directions
            elems = concatMap (computeElements threshold) regions
            aligned = align alignThreshold elems
        putStrLn "### COLORS #######"
        writeFile (withExt "colors") $ concatMap showCharGrid colors
+       putStrLn "### ISLANDS ######"
+       writeFile (withExt "islands") $ unlines $ map showCharGrid islandGroups
        putStrLn "### DIRECTIONS ###"
        writeFile (withExt "directions") . unlines $ map showGrid directions
 --       mapM_ (putBeside . map showGrid) $ directions

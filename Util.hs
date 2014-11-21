@@ -1,9 +1,12 @@
-module Util ( lengthI, sizeI
+module Util ( lengthI, sizeI, roundI
             , putBeside, splitEvery
             , differences) where
 
 import Data.List (intercalate)
 import Data.Map (Map, size, difference)
+
+roundI :: RealFrac a => a -> Integer
+roundI = toInteger . round
 
 lengthI :: [a] -> Integer
 lengthI = toInteger . length
