@@ -6,6 +6,7 @@ import Model
 import Direction
 import Elements
 import SparseRead
+import ShapeDetection
 
 import System.Environment
 import System.FilePath (replaceExtension, dropExtension)
@@ -75,6 +76,7 @@ processFile alignThreshold threshold fname =
        putStrLn $ "\n=>" ++ fname
        let colors = splitByVal f
            islandGroups = filter ((>threshold) . sizeI) . map trim $ concatMap islands colors
+           ellipses = filter isEllipse islandGroups
            directions = map getDecision islandGroups
            regions = map (sortBy (flip compare `on` sizeI) . filter ((>threshold) . sizeI) . concatMap islands . splitByVal) directions
            elems = concatMap (computeElements threshold) regions

@@ -1,4 +1,4 @@
-module Ellipses (isEllipse)where
+module ShapeDetection (isEllipse) where
 
 import Util
 import Model
