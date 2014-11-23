@@ -18,8 +18,8 @@ ss :: Integer -> String
 ss = show . show . (*10)
 
 svgShow :: Element -> String
-svgShow (Line (x, y) (x', y')) = concat ["<line x1=", ss x, " y1=", ss y, " x2=", ss x', " y2=", ss y', " stroke-width=\"3\"/>"]
-svgShow (Ellipse a@(x, y) b@(x', y')) = concat ["<ellipse cx=", ss cx, " cy=", ss cy, " rx=", ss rx, " ry=", ss ry, " stroke-width=\"3\"/>"]
+svgShow (Line (x, y) (x', y')) = concat ["<line x1=", ss x, " y1=", ss y, " x2=", ss x', " y2=", ss y', " stroke-width=\"3\" stroke=\"green\"/>"]
+svgShow (Ellipse a@(x, y) b@(x', y')) = concat ["<ellipse cx=", ss cx, " cy=", ss cy, " rx=", ss rx, " ry=", ss ry, " stroke-width=\"3\" stroke=\"blue\" fill=\"transparent\"/>"]
     where (cx, cy) = midpoint a b
           rx = (x' - x) `div` 2
           ry = (y' - y) `div` 2
@@ -30,13 +30,15 @@ svgWrite fname elems = writeFile fname contents
     where contents = concat [ "<svg width=\"11in\" height=\"8.5in\" "
                             , "viewBox=\"", s $ x-10, " ", s $ y-10, " ", s $ x'+10, " ", s $ y'+10, "\" "
                             , "xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\">"
-                            , "<g stroke=\"green\">"
                             , concatMap svgShow elems
-                            , "</g></svg>" 
+                            , "</svg>" 
                             ]
-          ((x, y), (x', y')) = foldl (\(a', b') (Line a b) -> (minC b (minC a a'), maxC a (maxC b b'))) first elems
-          first = let (Line a b) = head elems
-                  in (a, b)
+          ((x, y), (x', y')) = foldl minimize first elems
+          minimize (a', b') elem = (minC b (minC a a'), maxC a (maxC b b'))
+              where (a, b) = ptsOf elem
+          ptsOf (Line a b)    = (a, b)
+          ptsOf (Ellipse a b) = (a, b)
+          first = ptsOf $ head elems
           s = show . (*10)
 
 fbShow :: String -> Element -> String
@@ -77,14 +79,16 @@ processFile alignThreshold threshold fname =
        let colors = splitByVal f
            islandGroups = filter ((>threshold) . sizeI) . map trim $ concatMap islands colors
            ellipses = filter isEllipse islandGroups
-           directions = map getDecision islandGroups
+           directions = map getDecision $ filter (not . isEllipse) islandGroups
            regions = map (sortBy (flip compare `on` sizeI) . filter ((>threshold) . sizeI) . concatMap islands . splitByVal) directions
-           elems = concatMap (computeElements threshold) regions
+           elems = concat [map computeEllipse ellipses, concatMap (computeElements threshold) regions]
            aligned = align alignThreshold elems
        putStrLn "### COLORS #######"
        writeFile (withExt "colors") $ concatMap showCharGrid colors
        putStrLn "### ISLANDS ######"
        writeFile (withExt "islands") $ unlines $ map showCharGrid islandGroups
+       putStrLn "### ELLIPSES #####"
+       writeFile (withExt "ellipses") $ unlines $ map showCharGrid ellipses
        putStrLn "### DIRECTIONS ###"
        writeFile (withExt "directions") . unlines $ map showGrid directions
 --       mapM_ (putBeside . map showGrid) $ directions

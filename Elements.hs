@@ -1,4 +1,4 @@
-module Elements ( Element(..), computeElements, align) where
+module Elements ( Element(..), computeElements, computeEllipse, align) where
 
 import Util
 import Model
@@ -54,6 +54,10 @@ thinLine m
                         mid a b = toInteger . round $ a' + ((b' - a') / 2)
                                   where a' = fromIntegral a
                                         b' = fromIntegral b
+
+computeEllipse :: Grid a -> Element
+computeEllipse g = Ellipse a b
+    where (Box a b) = boxOf g
 
 computeElements :: Integer -> [Grid Direction] -> [Element]
 computeElements threshold m = recur . byDistance $ Maybe.mapMaybe toInternal m
