@@ -1,4 +1,4 @@
-module Elements ( Element(..), computeElements, align, len) where
+module Elements ( Element(..), computeElements, align) where
 
 import Util
 import Model
@@ -9,26 +9,31 @@ import Data.Function (on)
 import Data.List (sortBy)
 import qualified Data.Map as Map
 
-data Element = Line Coord Coord deriving (Eq, Ord, Show, Read)
+data Element = Line Coord Coord 
+             | Ellipse Coord Coord deriving (Eq, Ord, Show, Read)
 
-len :: Element -> Integer
-len (Line a b) = distance a b
+weight :: Element -> Integer
+weight (Line a b) = distance a b
+weight (Ellipse a b) = distance a b
+
+alignCoord :: Integer -> Coord -> Coord -> Coord
+alignCoord threshold (x, y) (x', y') = (check x x', check y y')
+    where check a b = if (abs $ a - b) < threshold then a else b
+
+alignElem :: Integer -> Coord -> Element -> Element
+alignElem t c (Line a b)    = Line    (alignCoord t c a) (alignCoord t c b)
+alignElem t c (Ellipse a b) = Ellipse (alignCoord t c a) (alignCoord t c b)
+
+pointsOf :: Element -> [Coord]
+pointsOf (Line a b)    = [a, b]
+pointsOf (Ellipse a b) = [a, b]
 
 align :: Integer -> [Element] -> [Element]
-align threshold elems = foldl (\memo pt -> alignY pt memo) xAligned pts
-    where es = sortBy (flip compare `on` len) elems
-          xAligned = foldl (\memo pt -> alignX pt memo) es pts 
-          pts = concatMap (\(Line a b) -> [a, b]) es
-          alignY (_, y) elems = map (pullY y) elems
-          pullY y (Line a b) = Line (pullPtY a) (pullPtY b)
-                               where pullPtY (x, y') = if (abs $ y - y') < threshold
-                                                       then (x, y)
-                                                       else (x, y')
-          alignX (x, _) elems = map (pullX x) elems
-          pullX x (Line a b) = Line (pullPtX a) (pullPtX b)
-                               where pullPtX (x', y) = if (abs $ x - x') < threshold
-                                                       then (x, y)
-                                                       else (x', y)
+align threshold elems = recur es
+    where recur (e:rest) = e : (recur $ foldl (\memo pt -> map (alignEl pt) memo) rest $ pointsOf e)
+          recur [] = []
+          alignEl = alignElem threshold
+          es = sortBy (flip compare `on` weight) elems
 
 -- resolveOverlaps :: [Element] -> [Element]
 -- -- TODO; should combine/filter overlapping lines.
@@ -55,8 +60,7 @@ computeElements threshold m = recur . byDistance $ Maybe.mapMaybe toInternal m
     where toInternal region = case thinLine region of
                                 Just ln -> Just (region, ln)
                                 Nothing -> Nothing                               
-          byDistance = sortBy (flip compare `on` (len . snd))
-          len (Line a b) = distance a b
+          byDistance = sortBy (flip compare `on` (weight . snd))
           recur [] = []
           recur (r:rest) = (snd r) : (recur . byDistance $ filterOut (fst r) rest)
           filterOut _ [] = []

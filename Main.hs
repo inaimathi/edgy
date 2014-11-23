@@ -13,9 +13,15 @@ import Data.Function (on)
 import Data.List (sortBy)
 
 ---------- File emission
+ss :: Integer -> String
+ss = show . show . (*10)
+
 svgShow :: Element -> String
 svgShow (Line (x, y) (x', y')) = concat ["<line x1=", ss x, " y1=", ss y, " x2=", ss x', " y2=", ss y', " stroke-width=\"3\"/>"]
-    where ss = show . show . (*10)
+svgShow (Ellipse a@(x, y) b@(x', y')) = concat ["<ellipse cx=", ss cx, " cy=", ss cy, " rx=", ss rx, " ry=", ss ry, " stroke-width=\"3\"/>"]
+    where (cx, cy) = midpoint a b
+          rx = (x' - x) `div` 2
+          ry = (y' - y) `div` 2
 
 svgWrite :: FilePath -> [Element] -> IO ()
 svgWrite _ [] = do return ()
@@ -35,6 +41,11 @@ svgWrite fname elems = writeFile fname contents
 fbShow :: String -> Element -> String
 fbShow factId (Line (x, y) (x', y')) = 
     concat [ "(", factId, " :LINE-SEGMENT NIL)\n"
+           , "(", factId, " :START (", show x, " ", show y, "))\n"
+           , "(", factId, " :END (", show x', " ", show y', "))\n"
+           ]
+fbShow factId (Ellipse (x, y) (x', y')) =
+    concat [ "(", factId, " :ELLIPSE NIL)\n"
            , "(", factId, " :START (", show x, " ", show y, "))\n"
            , "(", factId, " :END (", show x', " ", show y', "))\n"
            ]
