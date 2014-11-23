@@ -19,7 +19,8 @@ ss = show . show . (*10)
 
 svgShow :: Element -> String
 svgShow (Line (x, y) (x', y')) = concat ["<line x1=", ss x, " y1=", ss y, " x2=", ss x', " y2=", ss y', " stroke-width=\"3\" stroke=\"green\"/>"]
-svgShow (Ellipse a@(x, y) b@(x', y')) = concat ["<ellipse cx=", ss cx, " cy=", ss cy, " rx=", ss rx, " ry=", ss ry, " stroke-width=\"3\" stroke=\"blue\" fill=\"transparent\"/>"]
+svgShow (Ellipse a@(x, y) b@(x', y')) = concat [ "<ellipse cx=", ss cx, " cy=", ss cy, " rx=", ss rx, " ry=", ss ry
+                                               , " stroke-width=\"3\" stroke=\"blue\" fill=\"transparent\"/>"]
     where (cx, cy) = midpoint a b
           rx = (x' - x) `div` 2
           ry = (y' - y) `div` 2
