@@ -1,4 +1,4 @@
-# EAF
+# edgy
 #### Parsing scanned bitmaps for flow diagrams and visual programming
 
 # Basics
@@ -141,7 +141,7 @@ The current output of this process can be seen in the [`test-data/` folder](http
 
 **Re-think the sorting criteria**
 
-Right now, it's the length of the hypothetical line made from the region. That's probably good enough for ordinal regions, but we might actually want to grade cardinal regions by longest contiguous line rather than the naive bounding box (this would prevent the vertical line artifacts in diamonds and triangles observed in sanitized-input.* testing). We shouldn' *thin* cardinal regions this way, merely use it for ranking purposes, otherwise we get a really strict straightness requirement that basically means we need a ruler and stable surface out when drawing this stuff (at that stage, what's the point?)
+Right now, it's the length of the hypothetical line made from the region. That's probably good enough for ordinal regions, but we might actually want to grade cardinal regions by longest contiguous line rather than the naive bounding box (this would prevent the vertical line artifacts in diamonds and triangles observed in sanitized-input.* testing). We shouldn't *thin* cardinal regions this way, merely use it for ranking purposes, otherwise we get a really strict straightness requirement that basically means we need a ruler and stable surface out when drawing this stuff. At that stage, what's the point?
 
 **Tune up the alignment routine**
 
